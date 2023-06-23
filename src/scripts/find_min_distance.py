@@ -50,3 +50,18 @@ def main():
  
                             
 main()
+     #рассчитываем все пары пользователей, которые переписывались
+     user_left_contacts = events.where(F.col('event_type')=='message') \
+        .select(col('event.message_from').alias('user_left'), col('event.message_to').alias('user_right')) \
+    user_right_contacts = events.where(F.col('event_type')=='message') \
+        .select(col('event.message_to').alias('user_left'), col('event.message_from').alias('user_right')) \
+    realcontacts=user_left_contacts.union(user_right_contacts).distinct()
+                
+    #рассчитываем все возможные пары пользователей                    
+     all_users=events.where(F.col('event_type')=='message')\
+     .selectExpr('event.message_from as left_user')
+     .union (events.where(F.col('event_type')=='message').selectExpr('event.message_to as right_user')).distinct()
+     all_possible_contacts=all_users.crossJoin(all_users)
+
+     #рассчитываем все пары пользователей, которые не переписывались                      
+     no_contacts_users=all_possible_contacts.substract(real_contacts)
