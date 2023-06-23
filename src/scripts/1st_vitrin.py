@@ -96,7 +96,7 @@ def main():
 
     base_input_path='/user/voltschok/data/geo/events'
     date='2022-05-01'
-    depth=2
+    depth=20
     csv_path='/user/voltschok/data/geo/cities'
     output_path='/user/voltschok/data/geo/analytics/'
     spark = SparkSession.builder \
@@ -126,7 +126,7 @@ def main():
     #рассчитываем таблицу с изменениями города отправки сообщения
     temp_df=general_tb.withColumn('max_date',F.max('date')\
                         .over(Window().partitionBy('user_id')))\
-                        .withColumn('city_lag',F.lag('city',-1,'empty')\
+                        .withColumn('city_lag',F.lead('city',1,'empty')\
                         .over(Window().partitionBy('user_id').orderBy(F.col('date').desc())))\
                         .filter(F.col('city') != F.col('city_lag'))
 
@@ -160,7 +160,7 @@ def main():
     .join(travel_list, 'user_id', 'left')\
     .join(time_local, 'user_id', 'left')\
     .select('user_id', 'act_city', 'home_city', 'travel_count',  'travel_array', 'localtime')
-    final.orderBy('user_id').show(30)
+    final.orderBy('user_id').where('home_city is not null').show(30)
 
     #записываем результат по заданному пути
     final.write \
