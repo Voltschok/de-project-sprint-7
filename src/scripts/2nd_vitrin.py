@@ -68,7 +68,7 @@ def get_message_city(events, csv_path, spark):
     .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("distance"))))\
     .where("distance_rank == 1")\
     .drop('distance_rank' , 'distance' )\
-    .select('user_id', F.col('city').alias('act_city'), 'date' , "datetime", 'message_ts' , 'message_id' )
+    .select('user_id', F.col('city').alias('act_city'), "datetime", 'message_ts' , 'message_id' )
 
     #messages_cities.orderBy('user_id').show(30)
     return messages_cities
@@ -94,14 +94,14 @@ def last_message_city(events, csv_path, spark):
     .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("distance"))))\
     .where("distance_rank == 1")\
     .drop('distance_rank' , 'distance' )\
-    .select('user_id', F.col('city').alias('act_city'), 'date' , "datetime", 'message_ts' , 'message_id' )
+    .select('user_id', F.col('city').alias('act_city'), "datetime", 'message_ts' , 'message_id' )
 
 
     last_message_city=messages\
     .withColumn("datetime_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.desc("datetime"))))\
     .where("datetime_rank == 1").orderBy('user_id')\
     .join(messages_cities, 'user_id', 'left')\
-   .select('user_id', F.col('city').alias('act_city'), 'date' )
+   .select('user_id',  'act_city')
 
     #last_message_city.orderBy('user_id').show(30)
     return last_message_city
@@ -154,7 +154,7 @@ def main():
     .select('event.message_id', F.col('event.message_from').alias('user_id'), 'event.datetime', 
             F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
     .withColumn('event_type', F.lit('message'))\
-    .join(user_zones_t, 'message_id', how='inner')\
+    .join(message_zone, 'message_id', how='inner')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
     messages.show(10)
