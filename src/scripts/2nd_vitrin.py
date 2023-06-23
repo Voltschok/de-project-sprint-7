@@ -56,21 +56,25 @@ def get_geo_cities(csv_path, spark):
 def get_message_city(events, csv_path, spark):
     
     """ Функция рассчитывает ближайший город и возвращает в виде датасета """
-    messages=events.where(F.col('event_type')=='message')\
+    events_messages=events.where(F.col('event_type')=='message')\
     .withColumn('date', F.date_trunc("day", 
                         F.coalesce(F.col('event.datetime'), F.col('event.message_ts')) ))\
-    .selectExpr('event.message_id', 'event.message_from as user_id', 'date' ,'event.datetime','lat', 'lon', 'event.message_ts'  )
+    .selectExpr('event.message_id', 'event.message_from as user_id', 'date' ,'event.datetime',
+                'lat', 'lon', 'event.message_ts'  )
     
-    cities=get_geo_cities(csv_path, spark)
+    cities=get_geo_cities(csv_path, spark) 
 
-    messages_cities=messages\
+    #рассчитываем датасет с информацией по городам, из которых направлены все сообщения 
+    #(используем udf функцию для расчета расстояния)
+    messages_cities=events_messages\
     .crossJoin(cities)\
     .withColumn('distance',udf_func( F.col('lat'), F.col('lat_c'), F.col('lon'), F.col('lon_c')).cast('float'))\
-    .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("distance"))))\
+    .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id', 'message_id'])\
+                                                            .orderBy(F.asc("distance")))) \
     .where("distance_rank == 1")\
-    .drop('distance_rank' , 'distance' )\
-    .select(F.col('city').alias('act_city'), "datetime", 'message_ts' , 'message_id' )
-
+    .drop('distance_rank' , 'distance' , 'lat', 'lon', 'id', 'lat_c', 'lon_c')\
+    .select('message_id',  F.col('city').alias('zone_id'))
+   
     return messages_cities
 
 def last_message_city(events, csv_path, spark): 
@@ -101,7 +105,7 @@ def last_message_city(events, csv_path, spark):
     .withColumn("datetime_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.desc("datetime"))))\
     .where("datetime_rank == 1").orderBy('user_id')\
     .join(messages_cities, 'user_id', 'left')\
-   .select('user_id',  'act_city')
+    .select('user_id',  'act_city')
 
     return last_message_city
 
@@ -150,9 +154,10 @@ def main():
             F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
     .withColumn('event_type', F.lit('message'))\
     .join(message_zone, 'message_id', how='inner')\
+    .drop('message_id')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
-        
+    messages.show(30)   
     #рассчитываем датасет с подписками пользователей и присваиваем им zone_id из последнего сообщения пользователя
     subscriptions=events.where(F.col('event_type')=='subscription')\
     .select(F.col('event.user').alias('user_id'), 'event.datetime',
