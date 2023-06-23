@@ -154,7 +154,7 @@ def main():
         .withColumn('date_lag', F.coalesce( F.lag('date')\
                     .over(Window().partitionBy('user_id').orderBy(F.col('date').desc())), F.col('max_date')))\
         .withColumn('date_diff', F.datediff(F.col('date_lag'), F.col('date')))\
-        .where(F.col('date_diff')>2)\
+        .where(F.col('date_diff')>27)\
         .withColumn('rank', F.row_number()\
         .over(Window.partitionBy('user_id').orderBy(F.col('date').desc())))\
         .where(F.col('rank')==1)\
