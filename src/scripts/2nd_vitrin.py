@@ -42,8 +42,7 @@ def input_paths(date, depth,base_input_path ):
     return [f"{base_input_path}/date={(dt-datetime.timedelta(days=x)).strftime('%Y-%m-%d')}" for x in range(int(depth))]
 
 
-
-def get_act_city(events, csv_path, spark): 
+def get_message_city(events, csv_path, spark): 
     """ Функция рассчитывает ближайший город и возвращает в виде датасета """
     #geo_data_csv=spark.read.csv(csv_path)
     #geo_data = geo_data_csv.withColumn('lat', regexp_replace('lat', ',', '.').cast(DoubleType())\
@@ -52,7 +51,33 @@ def get_act_city(events, csv_path, spark):
     messages=events.where(F.col('event_type')=='message')\
     .withColumn('date', F.date_trunc("day", 
                         F.coalesce(F.col('event.datetime'), F.col('event.message_ts')) ))\
-    .selectExpr('event.message_from as user_id', 'date' ,'event.datetime','lat', 'lon', 'event.message_ts'  )
+    .selectExpr('event.message_id', 'event.message_from as user_id', 'date' ,'event.datetime','lat', 'lon', 'event.message_ts'  )
+    
+    cities=spark.read.parquet(csv_path) \
+    .withColumnRenamed("lat", "lat_c") \
+    .withColumnRenamed("lng", "lon_c")
+
+    messages_cities=messages\
+    .crossJoin(cities)\
+    .withColumn('distance',udf_func( F.col('lat'), F.col('lat_c'), F.col('lon'), F.col('lon_c')).cast('float'))\
+    .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("distance"))))\
+    .where("distance_rank == 1")\
+    .drop('distance_rank' , 'distance' )\
+    .select('user_id', F.col('city').alias('act_city'), 'date' , "datetime", 'message_ts' , 'message_id' )
+
+    #messages_cities.orderBy('user_id').show(30)
+    return messages_cities
+
+def last_message_city(events, csv_path, spark): 
+    """ Функция рассчитывает ближайший город и возвращает в виде датасета """
+    #geo_data_csv=spark.read.csv(csv_path)
+    #geo_data = geo_data_csv.withColumn('lat', regexp_replace('lat', ',', '.').cast(DoubleType())\
+    #.withColumn('lon', regexp_replace('lng', ',', '.').cast(DoubleType())\
+    #.select('id', 'city', 'lat', F.col('lng').alias('lon')
+    messages=events.where(F.col('event_type')=='message')\
+    .withColumn('date', F.date_trunc("day", 
+                        F.coalesce(F.col('event.datetime'), F.col('event.message_ts')) ))\
+    .selectExpr('event.message_id', 'event.message_from as user_id', 'date' ,'event.datetime','lat', 'lon', 'event.message_ts'  )
     
     cities=spark.read.parquet(csv_path) \
     .withColumnRenamed("lat", "lat_c") \
@@ -66,9 +91,18 @@ def get_act_city(events, csv_path, spark):
     .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("distance"))))\
     .where("distance_rank == 1")\
     .drop('distance_rank' , 'distance' )\
-    .select('user_id', F.col('city').alias('act_city'), 'date' , "datetime", 'message_ts' )
+    .select('user_id', F.col('city').alias('act_city'), 'date' , "datetime", 'message_ts' , 'message_id' )
 
-    return messages_cities
+
+    last_message_city=messages\
+    .withColumn("datetime_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.desc("datetime"))))\
+    .where("datetime_rank == 1").orderBy('user_id')\
+    .join(messages_cities, 'user_id', 'left')\
+   .select('user_id', F.col('city').alias('act_city'), 'date' )
+
+    #last_message_city.orderBy('user_id').show(30)
+    return last_message_city
+
 
  
 
@@ -108,16 +142,16 @@ def main():
     #events.printSchema()
     #получаем датасет с zone_id для каждого сообщения
     #user_zones_t=spark.read.parquet('/user/voltschok/data/analytics')
-    user_zones_t=get_act_city(events, csv_path, spark)
-    user_zones=user_zones_t.select('user_id', F.col('act_city').alias('zone_id'))
+    message_zone=get_message_city(events, csv_path, spark)
+    last_message_zone=last_message_city(events, csv_path, spark).select('user_id', F.col('act_city').alias('zone_id'))
     #user_zones.show(30)
 
     #получаем датасет со всеми сообщениями и делаем join с информацией по zone_id   
     messages=events.where(F.col('event_type')=='message')\
-    .select(F.col('event.message_from').alias('user_id'), 'event.datetime', 
+    .select('event.message_id', F.col('event.message_from').alias('user_id'), 'event.datetime', 
             F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
     .withColumn('event_type', F.lit('message'))\
-    .join(user_zones, 'user_id', how='left')\
+    .join(user_zones_t, 'message_id', how='inner')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
     messages.show(10)
@@ -127,7 +161,7 @@ def main():
     .select(F.col('event.user').alias('user_id'), 'event.datetime',
             F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
     .withColumn('event_type', F.lit('subscription'))\
-    .join(user_zones, 'user_id', 'left')\
+    .join(last_message_zone, 'user_id', 'inner')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('datetime')), 'yyyy-MM-dd')))
     subscriptions.where('zone_id is not null').show(10)
@@ -137,7 +171,7 @@ def main():
     .select(F.col('event.reaction_from').alias('user_id'), 'event.datetime', 
             F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
     .withColumn('event_type', F.lit('reaction'))\
-    .join(user_zones, 'user_id', 'left')\
+    .join(last_message_zone, 'user_id', 'inner')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
     reactions.show(10)
@@ -148,7 +182,7 @@ def main():
     .where(F.col('reg_date_rank')==1).drop('reg_date_rank')\
     .select('user_id','datetime', 'date')\
     .withColumn('event_type', F.lit('registration'))\
-    .join(user_zones, 'user_id', 'left')\
+    .join(last_message_zone, 'user_id', 'inner')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
     registrations.where('zone_id is not null').show(10)
