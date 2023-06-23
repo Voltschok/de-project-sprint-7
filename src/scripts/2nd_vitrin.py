@@ -12,6 +12,7 @@ from pyspark.sql import SQLContext
 
 import pyspark.sql.functions as F
 from pyspark.sql.functions import year, month, dayofmonth
+from pyspark.sql.types import DoubleType
 
 import findspark
 findspark.init()
