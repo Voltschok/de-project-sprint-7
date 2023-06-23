@@ -64,4 +64,10 @@ main()
      all_possible_contacts=all_users.crossJoin(all_users)
 
      #рассчитываем все пары пользователей, которые не переписывались                      
-     no_contacts_users=all_possible_contacts.substract(real_contacts)
+     no_contacts_users_with_dupl=all_possible_contacts.substract(real_contacts) 
+     no_contacts_users=no_contacts_users_with_dupl\
+                      .union(no_contacts_users_with_dupl\
+                      .select(F.col('user_right').alias('user_left'),F.col('user_left').alias('user_right')))\
+                      .distinct()
+   
+     
