@@ -6,7 +6,6 @@ os.environ['HADOOP_CONF_DIR'] = '/etc/hadoop/conf'
 os.environ['YARN_CONF_DIR'] = '/etc/hadoop/conf'
 os.environ['PYSPARK_PYTHON'] = '/usr/bin/python3'
 
-
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SQLContext
 
@@ -80,10 +79,6 @@ def get_message_city(events, csv_path, spark):
 def last_message_city(events, csv_path, spark): 
     
     """ Функция рассчитывает ближайший город и возвращает в виде датасета """
-    #geo_data_csv=spark.read.csv(csv_path)
-    #geo_data = geo_data_csv.withColumn('lat', regexp_replace('lat', ',', '.').cast(DoubleType())\
-    #.withColumn('lon', regexp_replace('lng', ',', '.').cast(DoubleType())\
-    #.select('id', 'city', 'lat', F.col('lng').alias('lon')
     messages=events.where(F.col('event_type')=='message')\
     .withColumn('date', F.date_trunc("day", 
                         F.coalesce(F.col('event.datetime'), F.col('event.message_ts')) ))\
@@ -108,9 +103,6 @@ def last_message_city(events, csv_path, spark):
     .select('user_id',  'act_city')
 
     return last_message_city
-
-
- 
 
 def main():
     #получаем параметры из командной строки
