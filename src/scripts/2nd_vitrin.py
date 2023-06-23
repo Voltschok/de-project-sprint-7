@@ -23,8 +23,6 @@ from pyspark.sql.functions import *
 from pyspark.sql.functions import udf
 from pyspark.sql.window import Window
 
-
-
 def get_distance(lat_1, lat_2, long_1, long_2):
     """ Функция для расчета расстояния по заданным координатам  """
     lat_1=(math.pi/180)*lat_1
@@ -56,10 +54,6 @@ def get_geo_cities(csv_path, spark):
 
 def get_message_city(events, csv_path, spark): 
     """ Функция рассчитывает ближайший город и возвращает в виде датасета """
-    #geo_data_csv=spark.read.csv(csv_path)
-    #geo_data = geo_data_csv.withColumn('lat', regexp_replace('lat', ',', '.').cast(DoubleType())\
-    #.withColumn('lon', regexp_replace('lng', ',', '.').cast(DoubleType())\
-    #.select('id', 'city', 'lat', F.col('lng').alias('lon')
     messages=events.where(F.col('event_type')=='message')\
     .withColumn('date', F.date_trunc("day", 
                         F.coalesce(F.col('event.datetime'), F.col('event.message_ts')) ))\
