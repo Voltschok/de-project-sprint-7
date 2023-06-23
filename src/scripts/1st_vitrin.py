@@ -113,7 +113,7 @@ def main():
     print(date)
     paths=input_paths(date, depth, base_input_path)
     print(paths)
-    events=spark.read.parquet(*paths)
+    events=spark.read.option("basePath", base_input_path).parquet(*paths)
     events.show(3)
     print(events.count())
     
