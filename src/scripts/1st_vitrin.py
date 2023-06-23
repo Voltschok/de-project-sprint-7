@@ -49,7 +49,8 @@ def get_general_tab(events_messages, spark):
     messages_cities=events_messages\
     .crossJoin(cities)\
     .withColumn('distance',udf_func( F.col('lat'), F.col('lat_c'), F.col('lon'), F.col('lon_c')).cast('float'))\
-    .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("distance")))) \
+    .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id', 'message_id'])\
+                                                            .orderBy(F.asc("distance")))) \
     .where("distance_rank == 1")\
     .drop('distance_rank' , 'distance' , 'lat', 'lon', 'id', 'lat_c', 'lon_c')
     return messages_cities #.select('user_id', 'date', 'city', 'datetime')
@@ -73,23 +74,27 @@ def get_act_city(events_messages, spark):
     #рассчитываем датасет с информацией по городам, из которых направлены сообщения (используем udf функцию для расчета расстояния)
 
     messages_cities=events_messages\
+    .withColumn("datetime_rank", F.row_number().over(Window().partitionBy(['user_id', 'message_id'])\
+                                                     .orderBy(F.desc("datetime"))))\
+    .where("datetime_rank == 1").orderBy('user_id')\
     .crossJoin(cities)\
     .withColumn('distance',udf_func( F.col('lat'), F.col('lat_c'), F.col('lon'), F.col('lon_c')).cast('float'))\
     .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("distance")))) \
     .where("distance_rank == 1")\
-    .drop('distance_rank' , 'distance' , 'date', 'datetime')
+    .select('user_id', F.col('city').alias('act_city'), 'date' )
+    #.drop('distance_rank' , 'distance' , 'date', 'datetime')
 
     #messages_cities.show(5)
     #рассчитываем датасет с информацией по городам, из которых направлены самые последнее сообщение пользователя
 
-    mes=events_messages\
-    .withColumn("datetime_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.desc("datetime"))))\
-    .where("datetime_rank == 1").orderBy('user_id')\
-    .join(messages_cities, 'user_id', 'left')\
-   .select('user_id', F.col('city').alias('act_city'), 'date' )
+#     mes=events_messages\
+#     .withColumn("datetime_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.desc("datetime"))))\
+#     .where("datetime_rank == 1").orderBy('user_id')\
+#     .join(messages_cities, 'user_id', 'left')\
+   
 
     #mes.orderBy('user_id').show(30)
-    return mes
+    return messages_cities
 
 def main():   
     #получаем параметры из командной строки
@@ -100,8 +105,8 @@ def main():
     #output_path=sys.argv[5]
 
     base_input_path='/user/voltschok/data/geo/events'
-    date='2022-05-25'
-    depth=1
+    date='2022-05-01'
+    depth=2
     csv_path='/user/voltschok/data/geo/cities'
     output_path='/user/voltschok/data/geo/analytics/'
     spark = SparkSession.builder \
@@ -119,17 +124,18 @@ def main():
     
     events_messages=events.where(F.col('event_type')=='message')\
     .withColumn('date', F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))) )\
-    .selectExpr('event.message_from as user_id', 'date' ,'event.datetime','lat', 'lon' )
+    .selectExpr('event.message_from as user_id', 'event.message_id', 'date' ,'event.datetime','lat', 'lon' )
 
+    events_messages.orderBy('user_id').show(100)
     #вычисляем датасет со всеми сообщениями за заданный период
     general_tb= get_general_tab(events_messages, spark)
 
-    #general_tb.show()
+    general_tb.orderBy('user_id').show(35)
 
     #вычисляем датасет с городом, из которого было отправлено последнее сообщение
     act_cities_df = get_act_city(events_messages, spark)
     print('act_cities_df')
-    #act_cities_df.show(3)
+    act_cities_df.show(35)
     #act_cities_df.printSchema()
 
     #рассчитываем таблицу с изменениями города отправки сообщения
@@ -140,20 +146,25 @@ def main():
                         .filter(F.col('city') != F.col('city_lag'))
 
     print('temp_df')
+    #temp_df.orderBy('user_id').show(35)
     #temp_df.show(3)
     #рассчитываем адрес города, из которого были отправлены 27 дней подряд сообщения от пользователя
     home_city=temp_df\
+        .withColumnRenamed('city', 'home_city')\
         .withColumn('date_lag', F.coalesce( F.lag('date')\
                     .over(Window().partitionBy('user_id').orderBy(F.col('date').desc())), F.col('max_date')))\
         .withColumn('date_diff', F.datediff(F.col('date_lag'), F.col('date')))\
-        .where(F.col('date_diff')>27)\
+        .where(F.col('date_diff')>2)\
         .withColumn('rank', F.row_number()\
         .over(Window.partitionBy('user_id').orderBy(F.col('date').desc())))\
         .where(F.col('rank')==1)\
-        .drop('date_diff', 'date_lag', 'max_date', 'city_lag', 'rank')                      
+        .drop('date_diff', 'date_lag', 'max_date', 'city_lag', 'rank')
+    
+        #
+    
     print('home_city')
 
-    #home_city.orderBy('user_id').show()
+    home_city.orderBy('user_id').show()
 
     #рассчитываем кол-во смен города по каждому пользователю   
     travel_count=(temp_df.groupBy('user_id').count().withColumnRenamed('count', 'travel_count'))
@@ -176,7 +187,7 @@ def main():
     .join(travel_count,'user_id', 'left')\
     .join(travel_list, 'user_id', 'left')\
     .join(time_local, 'user_id', 'left')\
-    .select('user_id', 'act_city',  'travel_count',  'travel_array', 'localtime')
+    .select('user_id', 'act_city', 'home_city', 'travel_count',  'travel_array', 'localtime')
     final.orderBy('user_id').show(30)
 
     #записываем результат
