@@ -41,7 +41,7 @@ def input_paths(date, depth,base_input_path ):
     return [f"{base_input_path}/date={(dt-datetime.timedelta(days=x)).strftime('%Y-%m-%d')}" for x in range(int(depth))]
 
 def get_geo_cities(csv_path, spark):
-    #получаем датасет с геоданными городов из csv-файла
+    """Функция рассчитывает датасет с геоданными городов из csv-файла""" 
     geo_data_csv=spark.read.option("header", True)\
     .option("delimiter", ";").csv(csv_path)
  
@@ -53,7 +53,8 @@ def get_geo_cities(csv_path, spark):
         
     return geo_data
 
-def get_message_city(events, csv_path, spark): 
+def get_message_city(events, csv_path, spark):
+    
     """ Функция рассчитывает ближайший город и возвращает в виде датасета """
     messages=events.where(F.col('event_type')=='message')\
     .withColumn('date', F.date_trunc("day", 
@@ -70,10 +71,10 @@ def get_message_city(events, csv_path, spark):
     .drop('distance_rank' , 'distance' )\
     .select('user_id', F.col('city').alias('act_city'), "datetime", 'message_ts' , 'message_id' )
 
-    #messages_cities.orderBy('user_id').show(30)
     return messages_cities
 
 def last_message_city(events, csv_path, spark): 
+    
     """ Функция рассчитывает ближайший город и возвращает в виде датасета """
     #geo_data_csv=spark.read.csv(csv_path)
     #geo_data = geo_data_csv.withColumn('lat', regexp_replace('lat', ',', '.').cast(DoubleType())\
@@ -84,9 +85,8 @@ def last_message_city(events, csv_path, spark):
                         F.coalesce(F.col('event.datetime'), F.col('event.message_ts')) ))\
     .selectExpr('event.message_id', 'event.message_from as user_id', 'date' ,'event.datetime','lat', 'lon', 'event.message_ts'  )
     
+    
     cities=get_geo_cities(csv_path, spark)
-
-    #cities.show(10)
 
     messages_cities=messages\
     .crossJoin(cities)\
@@ -103,7 +103,6 @@ def last_message_city(events, csv_path, spark):
     .join(messages_cities, 'user_id', 'left')\
    .select('user_id',  'act_city')
 
-    #last_message_city.orderBy('user_id').show(30)
     return last_message_city
 
 
@@ -122,7 +121,6 @@ def main():
     depth=3
     csv_path='/user/voltschok/data/geo/test.csv'
     output_path='/user/voltschok/data/geo/analytics/'
-
     
     spark = SparkSession.builder\
                         .master('local')\
@@ -135,14 +133,11 @@ def main():
     
     #получаем пути по заданному времени и глубине
     paths=input_paths(date, depth, base_input_path)
-    print(paths)
-    
+       
     #считываем все события по заданным путям
     #events=spark.read.parquet(*paths)
     events=spark.read.option("basePath", base_input_path).parquet(*paths)
-    events.printSchema() 
-    
-    #events.printSchema()
+     
     #получаем датасет с zone_id для каждого сообщения
     #user_zones_t=spark.read.parquet('/user/voltschok/data/analytics')
     message_zone=get_message_city(events, csv_path, spark)
@@ -157,8 +152,7 @@ def main():
     .join(message_zone, 'message_id', how='inner')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
-    messages.show(10)
-    
+        
     #рассчитываем датасет с подписками пользователей и присваиваем им zone_id из последнего сообщения пользователя
     subscriptions=events.where(F.col('event_type')=='subscription')\
     .select(F.col('event.user').alias('user_id'), 'event.datetime',
@@ -177,8 +171,7 @@ def main():
     .join(last_message_zone, 'user_id', 'inner')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
-    reactions.show(10)
-
+   
     #рассчитываем датасет с регистрациями пользователей и присваиваем им zone_id из последнего сообщения пользователя
     registrations=messages\
     .withColumn("reg_date_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("date"))))\
@@ -188,8 +181,7 @@ def main():
     .join(last_message_zone, 'user_id', 'inner')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
-    registrations.where('zone_id is not null').show(10)
-    
+        
     #объединяем все события
     result=messages\
     .union(subscriptions)\
@@ -204,8 +196,7 @@ def main():
     .withColumnRenamed('reaction','month_reaction')\
     .withColumnRenamed('subscription','month_subscription')\
     .withColumnRenamed('registration','month_user')
-    result_month.show(30)
-          
+             
     #рассчитываем статистику по zone_id по неделям
     result_week=result\
     .groupBy('month', 'week', 'zone_id')\
@@ -214,8 +205,7 @@ def main():
     .withColumnRenamed('reaction','week_reaction')\
     .withColumnRenamed('subscription','week_subscription')\
     .withColumnRenamed('registration','week_user')
-    result_week.show(30)
-    
+       
     #объединяем датасеты
     result_final=result_week.join(result_month, ['month', 'zone_id'], 'left')
     result_final.show(30)
