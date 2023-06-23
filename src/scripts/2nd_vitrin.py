@@ -69,7 +69,7 @@ def get_message_city(events, csv_path, spark):
     .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("distance"))))\
     .where("distance_rank == 1")\
     .drop('distance_rank' , 'distance' )\
-    .select('user_id', F.col('city').alias('act_city'), "datetime", 'message_ts' , 'message_id' )
+    .select(F.col('city').alias('act_city'), "datetime", 'message_ts' , 'message_id' )
 
     return messages_cities
 
@@ -118,7 +118,7 @@ def main():
     
     base_input_path='/user/voltschok/data/geo/events'
     date='2022-05-02'
-    depth=3
+    depth=1
     csv_path='/user/voltschok/data/geo/test.csv'
     output_path='/user/voltschok/data/geo/analytics/'
     
