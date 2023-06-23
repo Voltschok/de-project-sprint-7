@@ -41,6 +41,18 @@ def input_paths(date, depth,base_input_path ):
     dt = datetime.datetime.strptime(date, '%Y-%m-%d')
     return [f"{base_input_path}/date={(dt-datetime.timedelta(days=x)).strftime('%Y-%m-%d')}" for x in range(int(depth))]
 
+def get_geo_cities(csv_path, spark):
+    #получаем датасет с геоданными городов из csv-файла
+    geo_data_csv=spark.read.option("header", True)\
+    .option("delimiter", ";").csv(csv_path)
+ 
+    geo_data = geo_data_csv.withColumn('lat', regexp_replace('lat', ',', '.').cast(DoubleType()))\
+    .withColumn('lon', regexp_replace('lng', ',', '.').cast(DoubleType()))\
+    .withColumnRenamed("lat", "lat_c") \
+    .withColumnRenamed("lon", "lon_c")\
+    .select('id', 'city', 'lat_c',  'lon_c')
+        
+    return geo_data
 
 def get_message_city(events, csv_path, spark): 
     """ Функция рассчитывает ближайший город и возвращает в виде датасета """
@@ -53,9 +65,7 @@ def get_message_city(events, csv_path, spark):
                         F.coalesce(F.col('event.datetime'), F.col('event.message_ts')) ))\
     .selectExpr('event.message_id', 'event.message_from as user_id', 'date' ,'event.datetime','lat', 'lon', 'event.message_ts'  )
     
-    cities=spark.read.parquet(csv_path) \
-    .withColumnRenamed("lat", "lat_c") \
-    .withColumnRenamed("lng", "lon_c")
+    cities=get_geo_cities(csv_path, spark)
 
     messages_cities=messages\
     .crossJoin(cities)\
@@ -79,9 +89,7 @@ def last_message_city(events, csv_path, spark):
                         F.coalesce(F.col('event.datetime'), F.col('event.message_ts')) ))\
     .selectExpr('event.message_id', 'event.message_from as user_id', 'date' ,'event.datetime','lat', 'lon', 'event.message_ts'  )
     
-    cities=spark.read.parquet(csv_path) \
-    .withColumnRenamed("lat", "lat_c") \
-    .withColumnRenamed("lng", "lon_c")
+    cities=get_geo_cities(csv_path, spark)
 
     #cities.show(10)
 
@@ -117,7 +125,7 @@ def main():
     base_input_path='/user/voltschok/data/geo/events'
     date='2022-05-02'
     depth=3
-    csv_path='/user/voltschok/data/geo/cities'
+    csv_path='/user/voltschok/data/geo/test.csv'
     output_path='/user/voltschok/data/geo/analytics/'
 
     
