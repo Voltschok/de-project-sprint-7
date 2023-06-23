@@ -38,13 +38,15 @@ def input_paths(date, depth,base_input_path ):
 
 def get_geo_cities(csv_path, spark):
     #получаем датасет с геоданными городов из csv-файла
-    #geo_data_csv=spark.read.csv(csv_path)
-    #geo_data = geo_data_csv.withColumn('lat', regexp_replace('lat', ',', '.').cast(DoubleType())\
-    #.withColumn('lon', regexp_replace('lng', ',', '.').cast(DoubleType())\
-    #.select('id', 'city', 'lat', F.col('lng').alias('lon')
-    geo_data = spark.read.parquet(csv_path) \
+    geo_data_csv=spark.read.option("header", True)\
+    .option("delimiter", ";").csv(csv_path)
+ 
+    geo_data = geo_data_csv.withColumn('lat', regexp_replace('lat', ',', '.').cast(DoubleType()))\
+    .withColumn('lon', regexp_replace('lng', ',', '.').cast(DoubleType()))\
     .withColumnRenamed("lat", "lat_c") \
-    .withColumnRenamed("lng", "lon_c")
+    .withColumnRenamed("lon", "lon_c")\
+    .select('id', 'city', 'lat_c',  'lon_c')
+        
     return geo_data
 
 
