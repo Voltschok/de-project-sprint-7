@@ -19,6 +19,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.functions import udf
 from pyspark.sql.window import Window
+from pyspark.sql.types import DoubleType
 
 def get_distance(lat_1, lat_2, long_1, long_2):
     lat_1=(math.pi/180)*lat_1
