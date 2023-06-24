@@ -2,6 +2,8 @@ from datetime import datetime
 from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from airflow.operators.weekday import BranchDayOfWeekOperator
+from airflow.decorators import dag, task
+from airflow.operators.empty import EmptyOperator
 import os
 
 os.environ['HADOOP_CONF_DIR'] = '/etc/hadoop/conf'
@@ -63,11 +65,12 @@ first_vitrin = SparkSubmitOperator(
                         executor_cores = 2,
                         executor_memory = '4g',
                         )
+empty_task = EmptyOperator(task_id='branch_false')
 
 branch = BranchDayOfWeekOperator(
         task_id="make_choice",
         follow_task_ids_if_true="zone_month_week",
-        follow_task_ids_if_false="",
+        follow_task_ids_if_false="branch_false",
         week_day="Monday",
         dag=dag_spark
  
