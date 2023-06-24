@@ -107,17 +107,17 @@ def last_message_city(events, csv_path, spark):
 
 def main():
     #получаем параметры из командной строки
-#     base_input_path=sys.argv[1]
-#     date=sys.argv[2]
-#     depth=int(sys.argv[3])
-#     csv_path=sys.argv[4]
-#     output_path=sys.argv[5]
+     base_input_path=sys.argv[1]
+     date=sys.argv[2]
+     depth=int(sys.argv[3])
+     csv_path=sys.argv[4]
+     output_path=sys.argv[5]
     
-    base_input_path='/user/voltschok/data/geo/events'
-    date='2022-05-15'
-    depth=1
-    csv_path='/user/voltschok/data/geo/test.csv'
-    output_path='/user/voltschok/data/geo/analytics/'
+    #base_input_path='/user/voltschok/data/geo/events'
+    #date='2022-05-15'
+    #depth=1
+    #csv_path='/user/voltschok/data/geo/test.csv'
+    #output_path='/user/voltschok/data/geo/analytics/'
     
     spark = SparkSession.builder\
                         .master('local')\
