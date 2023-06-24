@@ -90,18 +90,24 @@ def get_act_city(events_messages, csv_path, spark):
     return messages_cities
 
 def main():   
-    #получаем параметры из командной строки
-    #base_input_path=sys.argv[1]
-    #date=sys.argv[2]
-    #depth=sys.argv[3]
-    #csv_path=sys.argv[4]
-    #output_path=sys.argv[5]
 
-    base_input_path='/user/voltschok/data/geo/events'
-    date='2022-05-01'
-    depth=20
-    csv_path='/user/voltschok/data/geo/cities'
-    output_path='/user/voltschok/data/geo/analytics/'
+    #получаем параметры из командной строки
+    base_input_path=sys.argv[1]
+    date=sys.argv[2]
+    depth=int(sys.argv[3])
+    csv_path=sys.argv[4]
+    output_path=sys.argv[5]
+    print('base_input_path: ', base_input_path)
+    print('date: ', date)
+    print('depth: ', depth)
+    print('csv_path: ', csv_path)
+    print('output_path: ', output_path)
+    
+#     base_input_path='/user/voltschok/data/geo/events'
+#     date='2022-05-01'
+#     depth=20
+#     csv_path='/user/voltschok/data/geo/test.csv'
+#     output_path='/user/voltschok/data/geo/analytics/'
     spark = SparkSession.builder \
                     .master("local") \
                     .appName("Learning DataFrames") \
