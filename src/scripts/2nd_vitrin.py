@@ -210,7 +210,7 @@ def main():
             result_final=result_final.withColumn(col,lit('null'))
  
     #записываем результат
-    result_final.select(cols).write.mode("overwrite").parquet(f'{output_path}/zone_month_week-{date}-{depth}')
+    result_final.select(cols).write.mode("overwrite").parquet(f'{output_path}/city_zone/city_zone-{date}-{depth}')
 
 if __name__ == "__main__":
         main()
