@@ -28,7 +28,7 @@ update_data = SparkSubmitOperator(
                         application_args = [  
                            
                             '/user/voltschok/data/geo/events',
-                            '{{ dt }}',
+                            '{{ ds }}',
                             '1',
                             '/user/voltschok/data/geo/analytics/'                            
                         ],
