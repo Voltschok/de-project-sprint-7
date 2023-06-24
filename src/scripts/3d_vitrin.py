@@ -113,9 +113,9 @@ def main():
     recommendation.orderBy('user_left').show(30)
     
     #записываем результат по заданному пути
-#     recommendation.write \
-#         .mode("overwrite") \
-#         .parquet(output_path)
+    recommendation.write \
+        .mode("overwrite") \
+        .parquet(f'{output_path}/friend_recommendation_{date}_{depth}')
                 
 def get_common_subs_distance_zone(events, csv_path, spark):
                     
@@ -138,9 +138,10 @@ def get_common_subs_distance_zone(events, csv_path, spark):
     common_subs_distance=common_subs\
     .withColumn('distance', udf_func( F.col('lat_1'), F.col('lat_2'), F.col('lon_1'), F.col('lon_2')).cast(DoubleType()))\
     .where((F.col('distance').isNotNull())&(F.col('distance')<1.0))
-
+    #common_subs_distance.show()
     #рассчитываем через функцию get_subs_city город (zone_id) - достаточно только для одного пользователя user_left
     common_subs_distance_zone=get_subs_city(common_subs_distance,csv_path, spark)
+    #common_subs_distance_zone.show()
            
     return common_subs_distance_zone
 
@@ -173,7 +174,5 @@ def get_no_contacts(events):
            
     return no_contacts_users  
            
-
 if __name__ == "__main__":
-
     main()
