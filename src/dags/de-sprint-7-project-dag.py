@@ -1,6 +1,7 @@
 from datetime import datetime 
 from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
+from airflow.operators.weekday import BranchDayOfWeekOperator
 import os
 
 os.environ['HADOOP_CONF_DIR'] = '/etc/hadoop/conf'
