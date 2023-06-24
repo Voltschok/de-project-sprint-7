@@ -11,8 +11,8 @@ import pyspark.sql.functions as F
 def main():
         base_input_path=sys.argv[1]
         date=sys.argv[2]
-        depth=1
-        output_path=sys.argv[5]
+        depth=sys.argv[3]
+        output_path=sys.argv[4]
 
         #base_input_path = '/user/master/data/geo/events'
         #date = '2022-05-25'
