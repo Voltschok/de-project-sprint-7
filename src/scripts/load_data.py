@@ -11,24 +11,30 @@ from pyspark.sql import SQLContext
 import pyspark.sql.functions as F
 
 def main():
+        base_input_path=sys.argv[1]
+        date=sys.argv[2]
+        depth=int(sys.argv[3])
+        output_path=sys.argv[5]
+
+        #base_input_path = '/user/master/data/geo/events'
         #date = '2022-05-25'
-        base_input_path = '/user/master/data/geo/events'
-        base_output_path = '/user/voltschok/data/geo/events/'
+        #depth=1
+        #output_path = '/user/voltschok/data/geo/events/'
 
         conf = SparkConf().setAppName(f"EventsPartitioningJob-test")
         sc = SparkContext(conf=conf)
         sql = SQLContext(sc)
 
- # Напишите директорию чтения в общем виде
-        events = sql.read.parquet(f"{base_input_path}").sample(0.005)
+#чтение данных
+        events = sql.read.parquet(f"{base_input_path}") #.sample(0.005)
 
-# Напишите директорию записи
+# запись данных
         events\
         .write\
         .mode('overwrite')\
         .partitionBy(['date', 'event_type'])\
         .format('parquet')\
-        .save(f"{base_output_path}")
+        .save(f"{output_path}")
 
 
 if __name__ == "__main__":
