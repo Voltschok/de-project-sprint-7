@@ -56,7 +56,7 @@ first_vitrin = SparkSubmitOperator(
                             '2022-05-25',
                             '1',
                             '/user/voltschok/data/geo/cities/geo.csv',
-                            '/user/voltschok/data/geo/analytics/'                            
+                            '/user/voltschok/data/analytics/'                            
                         ],
                         conf={
             "spark.driver.maxResultSize": "20g",
@@ -77,7 +77,7 @@ second_vitrin = SparkSubmitOperator(
                             '2022-05-25',
                             '1',
                             '/user/voltschok/data/geo/cities/geo.csv',
-                            '/user/voltschok/data/geo/analytics/'                            
+                            '/user/voltschok/data/analytics/'                            
                         ],
                         conf={
             "spark.driver.maxResultSize": "20g",
@@ -98,7 +98,7 @@ third_vitrin = SparkSubmitOperator(
                             '2022-05-25',
                             '1',
                             '/user/voltschok/data/geo/cities/geo.csv',
-                            '/user/voltschok/data/geo/analytics/'                            
+                            '/user/voltschok/data/analytics/'                            
                         ],
                         conf={
             "spark.driver.maxResultSize": "20g",
