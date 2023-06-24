@@ -21,3 +21,32 @@
 Внутри `src` расположены две папки:
 - `/src/dags`;
 - `/src/sql`.
+
+## Структура хранилища
+
+### Формат данных: Parquet
+
+### Пути к источнику данных:
+ - "/user/voltschok/data/geo/events": данные по событиям
+ - "/user/voltschok/data/geo/city": данные по координатам городов и их временным зонам
+
+### Названия директорий:
+ - user_address: данные по актуальному и домашнему адресу пользователей
+ - friend_offers: данные для рекомендации друзей
+ - city_stats: данные по количеству событий в конкретном городе за неделю и месяц
+
+### Частота обновления данных:
+ - user_address: ежедневно
+ - friend_offers: ежедневно
+ - city_stats: ежемесячно
+
+### Пути к данным тестирования:
+ - "/user/voltschok/data/tmp/user_address"
+ - "/user/voltschok/data/tmp/friend_offers"
+ - "/user/voltschok/data/tmp/city_stats"
+
+### Пути к данным для аналитиков:
+ - "/user/voltschok/data/analytics/user_address"
+ - "/user/voltschok/data/analytics/friend_offers"
+ - "/user/voltschok/data/analytics/city_stats"
+ 
