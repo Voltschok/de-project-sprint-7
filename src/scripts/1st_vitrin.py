@@ -111,73 +111,68 @@ def main():
 
     #рассчитываем пути по заданным параметрам - дате, глубине расчета и источнику
     paths=input_paths(date, depth, base_input_path)
-    paths2=[]
-    #проверка наличия путей
-    for path in paths:
-        try:
-            spark.read.parquet(path)
-        except:
-            paths2.append(path)
-    paths=(set(paths)).difference(set(paths2))  
+ 
     #вычисляем датасет со всеми событиями
-    events=spark.read.option("basePath", base_input_path).parquet(*paths)
+    try:
+        events=spark.read.option("basePath", base_input_path).parquet(*paths)
 
-    #вычисляем датасет со всеми сообщениями
-    events_messages=events.where(F.col('event_type')=='message')\
-    .withColumn('date', F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))) )\
-    .selectExpr('event.message_from as user_id', 'event.message_id', 'date' ,'event.datetime','lat', 'lon' )
+        #вычисляем датасет со всеми сообщениями
+        events_messages=events.where(F.col('event_type')=='message')\
+        .withColumn('date', F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))) )\
+        .selectExpr('event.message_from as user_id', 'event.message_id', 'date' ,'event.datetime','lat', 'lon' )
 
-    #вычисляем датасет со всеми сообщениями за заданный период
-    general_tb= get_general_tab(events_messages, csv_path, spark)
+        #вычисляем датасет со всеми сообщениями за заданный период
+        general_tb= get_general_tab(events_messages, csv_path, spark)
 
-    #вычисляем датасет с городом, из которого было отправлено последнее сообщение
-    act_cities_df = get_act_city(events_messages, csv_path, spark)
+        #вычисляем датасет с городом, из которого было отправлено последнее сообщение
+        act_cities_df = get_act_city(events_messages, csv_path, spark)
 
 
-    #рассчитываем таблицу с изменениями города отправки сообщения
-    temp_df=general_tb.withColumn('max_date',F.max('date')\
-                        .over(Window().partitionBy('user_id')))\
-                        .withColumn('city_lag',F.lead('city',1,'empty')\
-                        .over(Window().partitionBy('user_id').orderBy(F.col('date').desc())))\
-                        .filter(F.col('city') != F.col('city_lag'))
+        #рассчитываем таблицу с изменениями города отправки сообщения
+        temp_df=general_tb.withColumn('max_date',F.max('date')\
+                            .over(Window().partitionBy('user_id')))\
+                            .withColumn('city_lag',F.lead('city',1,'empty')\
+                            .over(Window().partitionBy('user_id').orderBy(F.col('date').desc())))\
+                            .filter(F.col('city') != F.col('city_lag'))
 
-    #рассчитываем адрес города, из которого были отправлены 27 дней подряд сообщения от пользователя
-    home_city=temp_df\
-        .withColumnRenamed('city', 'home_city')\
-        .withColumn('date_lag', F.coalesce( F.lag('date')\
-                    .over(Window().partitionBy('user_id').orderBy(F.col('date').desc())), F.col('max_date')))\
-        .withColumn('date_diff', F.datediff(F.col('date_lag'), F.col('date')))\
-        .where(F.col('date_diff')>27)\
-        .withColumn('rank', F.row_number()\
-        .over(Window.partitionBy('user_id').orderBy(F.col('date').desc())))\
-        .where(F.col('rank')==1)\
-        .drop('date_diff', 'date_lag', 'max_date', 'city_lag', 'rank')
+        #рассчитываем адрес города, из которого были отправлены 27 дней подряд сообщения от пользователя
+        home_city=temp_df\
+            .withColumnRenamed('city', 'home_city')\
+            .withColumn('date_lag', F.coalesce( F.lag('date')\
+                        .over(Window().partitionBy('user_id').orderBy(F.col('date').desc())), F.col('max_date')))\
+            .withColumn('date_diff', F.datediff(F.col('date_lag'), F.col('date')))\
+            .where(F.col('date_diff')>27)\
+            .withColumn('rank', F.row_number()\
+            .over(Window.partitionBy('user_id').orderBy(F.col('date').desc())))\
+            .where(F.col('rank')==1)\
+            .drop('date_diff', 'date_lag', 'max_date', 'city_lag', 'rank')
 
-    #рассчитываем кол-во смен города по каждому пользователю   
-    travel_count=(temp_df.groupBy('user_id').count().withColumnRenamed('count', 'travel_count'))
+        #рассчитываем кол-во смен города по каждому пользователю   
+        travel_count=(temp_df.groupBy('user_id').count().withColumnRenamed('count', 'travel_count'))
 
-    #рассчитываем список городов, которые посетил пользователь
-    travel_list=temp_df.groupBy('user_id').agg(F.collect_list('city').alias('travel_array'))
+        #рассчитываем список городов, которые посетил пользователь
+        travel_list=temp_df.groupBy('user_id').agg(F.collect_list('city').alias('travel_array'))
 
-    #рассчитываем локальное время
-    time_local=act_cities_df.withColumn('timezone',  F.lit('Australia/Sydney'))\
-    .withColumn('localtime',  F.from_utc_timestamp(F.col("date"),F.col('timezone')))\
-    .drop('timezone', 'city', 'date', 'datetime' , 'act_city')
+        #рассчитываем локальное время
+        time_local=act_cities_df.withColumn('timezone',  F.lit('Australia/Sydney'))\
+        .withColumn('localtime',  F.from_utc_timestamp(F.col("date"),F.col('timezone')))\
+        .drop('timezone', 'city', 'date', 'datetime' , 'act_city')
 
-    #объединяем все данные в одну витрину                                                                         
-    final=act_cities_df.select('user_id', 'act_city')\
-    .join(home_city, 'user_id', 'left')\
-    .join(travel_count,'user_id', 'left')\
-    .join(travel_list, 'user_id', 'left')\
-    .join(time_local, 'user_id', 'left')\
-    .select('user_id', 'act_city', 'home_city', 'travel_count',  'travel_array', 'localtime')
-    final.orderBy('user_id').where('home_city is not null').show(30)
+        #объединяем все данные в одну витрину                                                                         
+        final=act_cities_df.select('user_id', 'act_city')\
+        .join(home_city, 'user_id', 'left')\
+        .join(travel_count,'user_id', 'left')\
+        .join(travel_list, 'user_id', 'left')\
+        .join(time_local, 'user_id', 'left')\
+        .select('user_id', 'act_city', 'home_city', 'travel_count',  'travel_array', 'localtime')
+        final.orderBy('user_id').where('home_city is not null').show(30)
 
-    #записываем результат по заданному пути
-    final.write \
-        .mode("overwrite") \
-        .parquet(f'{output_path}/user_address/user_address_{date}_{depth}')
-
+        #записываем результат по заданному пути
+        final.write \
+            .mode("overwrite") \
+            .parquet(f'{output_path}/user_address/user_address_{date}_{depth}')
+    except:
+        print('All paths were ignored')
 if __name__ == "__main__":
 
     main()
