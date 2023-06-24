@@ -111,8 +111,8 @@ def main():
     #output_path=sys.argv[5]
     
     base_input_path='/user/voltschok/data/geo/events'
-    date='2022-05-02'
-    depth=1
+    date='2022-05-15'
+    depth=3
     csv_path='/user/voltschok/data/geo/test.csv'
     output_path='/user/voltschok/data/geo/analytics/'
     
@@ -204,8 +204,7 @@ def main():
     'month_message',  'month_reaction', 'month_subscription', 'month_user')
     
     #записываем результат
-    result_final.show()
-    #result.write.mode("overwrite").parquet(output_path)
+    result.write.mode("overwrite").parquet(f'{output_path}/zone_month_week-{date}-{depth})
 
 if __name__ == "__main__":
         main()
