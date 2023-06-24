@@ -37,7 +37,7 @@
    
 ### Частота обновления данных:
  - user_address: ежедневно
- - city_zone: ежемесячно
+ - city_zone: еженедельно
  - friend_recommendation: ежедневно
  
 
