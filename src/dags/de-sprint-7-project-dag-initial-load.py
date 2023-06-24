@@ -31,10 +31,10 @@ load_data = SparkSubmitOperator(
                         conn_id= 'yarn_spark',
                         application_args = [  
                            
-                            '/user/voltschok/data/geo/events',
+                            '/user/master/data/geo/events',
                             '2022-05-25',
                             '1',
-                            '/user/voltschok/data/geo/analytics/'                            
+                            '/user/voltschok/data/geo/events/'                            
                         ],
                         conf={
             "spark.driver.maxResultSize": "20g",
