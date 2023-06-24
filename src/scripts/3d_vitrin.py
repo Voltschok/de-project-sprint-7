@@ -114,7 +114,7 @@ def main():
     #записываем результат по заданному пути
     recommendation.write \
         .mode("overwrite") \
-        .parquet(f'{output_path}/friend_recommendation_{date}_{depth}')
+        .parquet(f'{output_path}/friend_recommendation/friend_recommendation_{date}_{depth}')
                 
 def get_common_subs_distance_zone(events, csv_path, spark):
                     
