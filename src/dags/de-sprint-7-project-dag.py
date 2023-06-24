@@ -34,7 +34,7 @@ update_data = SparkSubmitOperator(
                             '/user/voltschok/data/geo/events',
                             '{{ ds }}',
                             '1',
-                            '/user/voltschok/data/geo/analytics/'                            
+                            '/user/voltschok/data/analytics/'                            
                         ],
                         conf={
             "spark.driver.maxResultSize": "20g",
@@ -56,7 +56,7 @@ first_vitrin = SparkSubmitOperator(
                             '{{ ds }}',
                             '1',
                             '/user/voltschok/data/geo/cities/geo.csv',
-                            '/user/voltschok/data/geo/analytics/'                            
+                            '/user/voltschok/data/analytics/'                            
                         ],
                         conf={
             "spark.driver.maxResultSize": "20g",
@@ -88,7 +88,7 @@ second_vitrin = SparkSubmitOperator(
                             '{{ ds }}',
                             '1',
                             '/user/voltschok/data/geo/cities/geo.csv',
-                            '/user/voltschok/data/geo/analytics/'                            
+                            '/user/voltschok/data/analytics/'                            
                         ],
                         conf={
             "spark.driver.maxResultSize": "20g",
@@ -109,7 +109,7 @@ third_vitrin = SparkSubmitOperator(
                             '{{ ds }}',
                             '1',
                             '/user/voltschok/data/geo/cities/geo.csv',
-                            '/user/voltschok/data/geo/analytics/'                            
+                            '/user/voltschok/data/analytics/'                            
                         ],
                         conf={
             "spark.driver.maxResultSize": "20g",
