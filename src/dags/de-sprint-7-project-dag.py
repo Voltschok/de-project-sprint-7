@@ -53,7 +53,7 @@ first_vitrin = SparkSubmitOperator(
                         application_args = [  
                            
                             '/user/voltschok/data/geo/events',
-                            '2022-06-06',
+                            '{{ ds }}',
                             '1',
                             '/user/voltschok/data/geo/cities/geo.csv',
                             '/user/voltschok/data/geo/analytics/'                            
@@ -85,7 +85,7 @@ second_vitrin = SparkSubmitOperator(
                         application_args = [  
                             
                             '/user/voltschok/data/geo/events',
-                            '2022-06-06',
+                            '{{ ds }}',
                             '1',
                             '/user/voltschok/data/geo/cities/geo.csv',
                             '/user/voltschok/data/geo/analytics/'                            
@@ -106,7 +106,7 @@ third_vitrin = SparkSubmitOperator(
                         application_args = [  
                           
                             '/user/voltschok/data/geo/events',
-                            '2022-06-06',
+                            '{{ ds }}',
                             '1',
                             '/user/voltschok/data/geo/cities/geo.csv',
                             '/user/voltschok/data/geo/analytics/'                            
