@@ -96,11 +96,6 @@ def main():
     csv_path=sys.argv[4]
     output_path=sys.argv[5]
     
-#     base_input_path='/user/voltschok/data/geo/events'
-#     date='2022-05-01'
-#     depth=20
-#     csv_path='/user/voltschok/data/geo/test.csv'
-#     output_path='/user/voltschok/data/geo/analytics/'
     spark = SparkSession.builder \
                     .master("local") \
                     .appName("Learning DataFrames") \
