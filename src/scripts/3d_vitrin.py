@@ -68,8 +68,7 @@ def get_subs_city(common_subs_distance, csv_path, spark):
     .where("distance_rank == 1")\
     .drop('distance_rank', 'distance')\
     .withColumnRenamed('city', 'zone_id')
-    
-    
+        
     return messages_cities
 
 
@@ -138,10 +137,9 @@ def get_common_subs_distance_zone(events, csv_path, spark):
     common_subs_distance=common_subs\
     .withColumn('distance', udf_func( F.col('lat_1'), F.col('lat_2'), F.col('lon_1'), F.col('lon_2')).cast(DoubleType()))\
     .where((F.col('distance').isNotNull())&(F.col('distance')<1.0))
-    #common_subs_distance.show()
+
     #рассчитываем через функцию get_subs_city город (zone_id) - достаточно только для одного пользователя user_left
     common_subs_distance_zone=get_subs_city(common_subs_distance,csv_path, spark)
-    #common_subs_distance_zone.show()
            
     return common_subs_distance_zone
 
