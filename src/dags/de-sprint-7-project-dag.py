@@ -20,6 +20,26 @@ dag_spark = DAG(
                         schedule_interval=None,
                         )
 
+update_data = SparkSubmitOperator(
+                        task_id='update_data',
+                        dag=dag_spark,
+                        application ='/lessons/dags/update_data.py' ,
+                        conn_id= 'yarn_spark',
+                        application_args = [  
+                           
+                            '/user/voltschok/data/geo/events',
+                            '{{ dt }}',
+                            '1',
+                            '/user/voltschok/data/geo/analytics/'                            
+                        ],
+                        conf={
+            "spark.driver.maxResultSize": "20g",
+            "spark.sql.broadcastTimeout": 1200,
+        },
+                        executor_cores = 2,
+                        executor_memory = '4g',
+                        )
+
 
 first_vitrin = SparkSubmitOperator(
                         task_id='user_address',
@@ -85,4 +105,4 @@ third_vitrin = SparkSubmitOperator(
                         executor_memory = '4g',
                         )
 
-first_vitrin >> second_vitrin >> third_vitrin
+update_data >> first_vitrin >> second_vitrin >> third_vitrin
