@@ -24,10 +24,11 @@ dag_spark = DAG(
 first_vitrin = SparkSubmitOperator(
                         task_id='user_address',
                         dag=dag_spark,
-                        application ='/src/scripts/user_address.py' ,
+                        application ='/lessons/dags/1st_vitrin.py' ,
                         conn_id= 'yarn_spark',
                         application_args = [  
-                            '/user/voltschok/data/geo/events'
+                           
+                            '/user/voltschok/data/geo/events',
                             '2022-05-25',
                             '1',
                             '/user/voltschok/data/geo/test.csv',
@@ -45,10 +46,11 @@ first_vitrin = SparkSubmitOperator(
 second_vitrin = SparkSubmitOperator(
                         task_id='zone_month_week',
                         dag=dag_spark,
-                        application ='/src/scripts/city_stats.py' ,
+                        application ='/lessons/dags/2nd_vitrin.py',
                         conn_id= 'yarn_spark',
                         application_args = [  
-                            '/user/voltschok/data/geo/events'
+                            
+                            '/user/voltschok/data/geo/events',
                             '2022-05-25',
                             '1',
                             '/user/voltschok/data/geo/test.csv',
@@ -65,10 +67,11 @@ second_vitrin = SparkSubmitOperator(
 third_vitrin = SparkSubmitOperator(
                         task_id='friend_recommendation',
                         dag=dag_spark,
-                        application ='/src/scripts/friend_offers.py' ,
+                        application ='/lessons/dags/3d_vitrin.py' ,
                         conn_id= 'yarn_spark',
                         application_args = [  
-                            '/user/voltschok/data/geo/events'
+                          
+                            '/user/voltschok/data/geo/events',
                             '2022-05-25',
                             '1',
                             '/user/voltschok/data/geo/test.csv',
