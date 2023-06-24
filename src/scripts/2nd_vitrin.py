@@ -145,7 +145,7 @@ def main():
     .drop('message_id')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
-    
+ 
     #рассчитываем датасет с подписками пользователей и присваиваем им zone_id из последнего сообщения пользователя
     subscriptions=events.where(F.col('event_type')=='subscription')\
     .select(F.col('event.user').alias('user_id'), 'event.datetime',
@@ -199,11 +199,13 @@ def main():
     .withColumnRenamed('registration','week_user')
        
     #объединяем датасеты
-    result_final=result_week.join(result_month, ['month', 'zone_id'], 'left')
-    result_final.show(30)
+    result_final=result_week.join(result_month, ['month', 'zone_id'], 'left')\
+    .select ('month', 'week','zone_id', 'week_message', 'week_reaction', 'week_subscription', 'week_user',
+    'month_message',  'month_reaction', 'month_subscription', 'month_user')
     
     #записываем результат
-    result.write.mode("overwrite").parquet(output_path)
+    result_final.show()
+    #result.write.mode("overwrite").parquet(output_path)
 
 if __name__ == "__main__":
         main()
