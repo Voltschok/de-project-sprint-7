@@ -93,7 +93,14 @@ def main():
 
     #рассчитываем пути по заданным параметрам - дате, глубине расчета и источнику
     paths=input_paths(date, depth, base_input_path)
-      
+    paths2=[]
+    #проверка наличия путей
+    for path in paths:
+        try:
+            spark.read.parquet(path)
+        except:
+            paths2.append(path)
+    paths=(set(paths)).difference(set(paths2))  
     #вычисляем датасет со всеми событиями
     events=spark.read.option("basePath", base_input_path).parquet(*paths)
 
