@@ -1,59 +1,86 @@
-import sys
-import datetime
-import os, math
+from datetime import datetime 
+from airflow import DAG
+from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
+import os
+
 os.environ['HADOOP_CONF_DIR'] = '/etc/hadoop/conf'
-os.environ['YARN_CONF_DIR'] = "$HADOOP_HOME/etc/hadoop"
-os.environ['PYSPARK_PYTHON'] = '/usr/bin/python3'
-os.environ['SPARK_LOCAL_IP'] = '127.0.1.1'
+os.environ['YARN_CONF_DIR'] = '/etc/hadoop/conf'
+os.environ['JAVA_HOME']='/usr'
+os.environ['SPARK_HOME'] ='/usr/lib/spark'
+os.environ['PYTHONPATH'] ='/usr/local/lib/python3.8'
 
- 
-import pyspark
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import *
-import pyspark.sql.functions as F
-from pyspark.sql.functions import to_timestamp
+default_args = {
+                                'owner': 'airflow',
+                                'start_date':datetime(2020, 1, 1),
+                                }
 
-#from datetime import datetime, timedelta
-
-from typing import List
-import sys
-
-
-import pyspark
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.window import Window
-from pyspark.sql.types import StringType
-
- 
-
-import pyspark.sql.functions as F
+dag_spark = DAG(
+                        dag_id = "sprint-7-project_dag",
+                        default_args=default_args,
+                        schedule_interval=None,
+                        )
 
 
-'/user/master/data/geo/events'
+first_vitrin = SparkSubmitOperator(
+                        task_id='user_address',
+                        dag=dag_spark,
+                        application ='/src/scripts/user_address.py' ,
+                        conn_id= 'yarn_spark',
+                        application_args = [  
+                            '/user/voltschok/data/geo/events'
+                            '2022-05-25',
+                            '1',
+                            '/user/voltschok/data/geo/test.csv',
+                            '/user/voltschok/data/geo/analytics/'                            
+                        ],
+                        conf={
+            "spark.driver.maxResultSize": "20g",
+            "spark.sql.broadcastTimeout": 1200,
+        },
+                        executor_cores = 2,
+                        executor_memory = '4g',
+                        )
 
-def get_distance(lat_1, lat_2, long_1, long_2):
-    lat_1=(math.pi/180)*lat_1
-    lat_2=(math.pi/180)*lat_2
-    long_1=(math.pi/180)*long_1
-    long_2=(math.pi/180)*long_2
 
-    return 2*6371*F.asin(
-    F.sqrt(F.pow(F.sin((F.col('lat_2') - F.col('lat_1'))/F.lit(2)), F.lit(2))+
-    F.cos('lat_1')*F.cos('lat_2')*F.pow(F.sin((F.col('long_2') - 
-                                               F.col('long_1'))/F.lit(2)), F.lit(2))
-    ))
-# def get_distance2(lat_1, lat_2, long_1, long_2):
-#     lat_1=(math.pi/180)*lat_1
-#     lat_2=(math.pi/180)*lat_2
+second_vitrin = SparkSubmitOperator(
+                        task_id='zone_month_week',
+                        dag=dag_spark,
+                        application ='/src/scripts/city_stats.py' ,
+                        conn_id= 'yarn_spark',
+                        application_args = [  
+                            '/user/voltschok/data/geo/events'
+                            '2022-05-25',
+                            '1',
+                            '/user/voltschok/data/geo/test.csv',
+                            '/user/voltschok/data/geo/analytics/'                            
+                        ],
+                        conf={
+            "spark.driver.maxResultSize": "20g",
+            "spark.sql.broadcastTimeout": 1200,
+        },
+                        executor_cores = 2,
+                        executor_memory = '4g',
+                        )
 
-#     long_1=(math.pi/180)*long_1
-#     long_2=(math.pi/180)*long_2
+third_vitrin = SparkSubmitOperator(
+                        task_id='friend_recommendation',
+                        dag=dag_spark,
+                        application ='/src/scripts/friend_offers.py' ,
+                        conn_id= 'yarn_spark',
+                        application_args = [  
+                            '/user/voltschok/data/geo/events'
+                            '2022-05-25',
+                            '1',
+                            '/user/voltschok/data/geo/test.csv',
+                            '/user/voltschok/data/geo/analytics/'                            
+                        ],
+                        conf={
+            "spark.driver.maxResultSize": "20g",
+            "spark.sql.broadcastTimeout": 1200,
+        },
+                        executor_cores = 2,
+                        executor_memory = '4g',
+                        )
 
-#     return 2*6371*math.asin(
-#     math.sqrt(math.pow(math.sin( lat_2- lat_1)/2, 2)+
-#     math.cos(lat_1)*math.cos(lat_2)*math.pow(math.sin( long_2  -  long_1 )/ 2 ,  2 )
-#     ))
-
-print(get_distance(55,59,37,30))
-
+first_vitrin >> second_vitrin >> third_vitrin
 
