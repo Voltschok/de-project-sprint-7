@@ -73,8 +73,6 @@ def get_act_city(events_messages, csv_path, spark):
 
     cities=get_geo_cities(csv_path, spark) 
 
-    #cities.show(10)
-
     #рассчитываем датасет с информацией по городам, из которых направлены последние отправленные сообщения 
     #(используем udf функцию для расчета расстояния) 
     messages_cities=events_messages\
