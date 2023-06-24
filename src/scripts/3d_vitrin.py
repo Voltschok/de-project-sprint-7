@@ -93,36 +93,32 @@ def main():
 
     #рассчитываем пути по заданным параметрам - дате, глубине расчета и источнику
     paths=input_paths(date, depth, base_input_path)
-    paths2=[]
-    #проверка наличия путей
-    for path in paths:
-        try:
-            spark.read.parquet(path)
-        except:
-            paths2.append(path)
-    paths=(set(paths)).difference(set(paths2))  
-    #вычисляем датасет со всеми событиями
-    events=spark.read.option("basePath", base_input_path).parquet(*paths)
 
-    #рассчитываем необходимые датасеты с помощью функций 
-    common_subs_distance_zone1=get_common_subs_distance_zone(events, csv_path, spark)
-    no_contacts_users1=get_no_contacts(events)
+    #вычисляем датасет со всеми событиями
+    try:
+        events=spark.read.option("basePath", base_input_path).parquet(*paths)
     
-    #рассчитываем финальный датасет
-    recommendation=common_subs_distance_zone1.join(no_contacts_users1, ['user_left', 'user_right'], 'inner')\
-        .withColumn('timezone',  F.lit('Australia/Sydney'))\
-        .withColumn("processed_dttm", current_date())\
-        .withColumn('local_datetime',  F.from_utc_timestamp(F.col("processed_dttm"),F.col('timezone')))\
-        .withColumn('local_time', date_format(col('local_datetime'), 'HH:mm:ss'))\
-        .select('user_left', 'user_right', 'processed_dttm',  'zone_id', 'local_time')
-    
-    recommendation.orderBy('user_left').show(30)
-    
-    #записываем результат по заданному пути
-    recommendation.write \
-        .mode("overwrite") \
-        .parquet(f'{output_path}/friend_recommendation/friend_recommendation_{date}_{depth}')
-                
+        #рассчитываем необходимые датасеты с помощью функций 
+        common_subs_distance_zone1=get_common_subs_distance_zone(events, csv_path, spark)
+        no_contacts_users1=get_no_contacts(events)
+
+        #рассчитываем финальный датасет
+        recommendation=common_subs_distance_zone1.join(no_contacts_users1, ['user_left', 'user_right'], 'inner')\
+            .withColumn('timezone',  F.lit('Australia/Sydney'))\
+            .withColumn("processed_dttm", current_date())\
+            .withColumn('local_datetime',  F.from_utc_timestamp(F.col("processed_dttm"),F.col('timezone')))\
+            .withColumn('local_time', date_format(col('local_datetime'), 'HH:mm:ss'))\
+            .select('user_left', 'user_right', 'processed_dttm',  'zone_id', 'local_time')
+
+        recommendation.orderBy('user_left').show(30)
+
+        #записываем результат по заданному пути
+        recommendation.write \
+            .mode("overwrite") \
+            .parquet(f'{output_path}/friend_recommendation/friend_recommendation_{date}_{depth}')
+    except:
+        print('All paths were ignored')
+         
 def get_common_subs_distance_zone(events, csv_path, spark):
                     
     #рассчитываем все пары пользователей, которые подписаны на один канал               
