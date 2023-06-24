@@ -168,7 +168,7 @@ def main():
     #записываем результат по заданному пути
     final.write \
         .mode("overwrite") \
-        .parquet(output_path)
+        .parquet(f'{output_path}/user_address_{date}_{depth}')
 
 if __name__ == "__main__":
 
