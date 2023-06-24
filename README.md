@@ -32,19 +32,19 @@
 
 ### Названия директорий:
  - user_address: данные по актуальному и домашнему адресу пользователей
- - city_stats: данные по количеству событий в конкретном городе за неделю и месяц
+ - city_zone: данные по количеству событий в конкретном городе за неделю и месяц
  - friend_recommendation: данные для рекомендации друзей
    
 ### Частота обновления данных:
  - user_address: ежедневно
- - city_stats: ежемесячно
+ - city_zone: ежемесячно
  - friend_recommendation: ежедневно
  
 
 ### Пути к данным тестирования:
  - "/user/voltschok/data/tmp/user_address"
- - "/user/voltschok/data/tmp/friend_recommendation"
  - "/user/voltschok/data/tmp/city_zone"
+ - "/user/voltschok/data/tmp/friend_recommendation"
 
 ### Пути к данным для аналитиков:
  - "/user/voltschok/data/analytics/user_address"
