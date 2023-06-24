@@ -204,7 +204,7 @@ def main():
     'month_message',  'month_reaction', 'month_subscription', 'month_user')
     
     #записываем результат
-    result_final.write.mode("overwrite").parquet(f'{output_path}/zone_month_week-{date}-{depth})
+    result_final.write.mode("overwrite").parquet(f'{output_path}/zone_month_week-{date}-{depth}')
 
 if __name__ == "__main__":
         main()
