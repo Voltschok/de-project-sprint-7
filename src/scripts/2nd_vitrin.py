@@ -145,7 +145,7 @@ def main():
     .drop('message_id')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
-    messages.show(30)   
+    
     #рассчитываем датасет с подписками пользователей и присваиваем им zone_id из последнего сообщения пользователя
     subscriptions=events.where(F.col('event_type')=='subscription')\
     .select(F.col('event.user').alias('user_id'), 'event.datetime',
