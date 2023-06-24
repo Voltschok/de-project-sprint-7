@@ -65,7 +65,7 @@ def get_general_tab(events_messages, csv_path, spark):
                                                             .orderBy(F.asc("distance")))) \
     .where("distance_rank == 1")\
     .drop('distance_rank' , 'distance' , 'lat', 'lon', 'id', 'lat_c', 'lon_c')
-    return messages_cities #.select('user_id', 'date', 'city', 'datetime')
+    return messages_cities  
 
 def get_act_city(events_messages, csv_path, spark): 
 
