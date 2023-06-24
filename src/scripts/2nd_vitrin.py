@@ -83,8 +83,7 @@ def last_message_city(events, csv_path, spark):
     .withColumn('date', F.date_trunc("day", 
                         F.coalesce(F.col('event.datetime'), F.col('event.message_ts')) ))\
     .selectExpr('event.message_id', 'event.message_from as user_id', 'date' ,'event.datetime','lat', 'lon', 'event.message_ts'  )
-    
-    
+  
     cities=get_geo_cities(csv_path, spark)
 
     messages_cities=messages\
@@ -94,7 +93,6 @@ def last_message_city(events, csv_path, spark):
     .where("distance_rank == 1")\
     .drop('distance_rank' , 'distance' )\
     .select('user_id', F.col('city').alias('act_city'), "datetime", 'message_ts' , 'message_id' )
-
 
     last_message_city=messages\
     .withColumn("datetime_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.desc("datetime"))))\
@@ -131,14 +129,12 @@ def main():
     paths=input_paths(date, depth, base_input_path)
        
     #считываем все события по заданным путям
-    #events=spark.read.parquet(*paths)
     events=spark.read.option("basePath", base_input_path).parquet(*paths)
      
     #получаем датасет с zone_id для каждого сообщения
     #user_zones_t=spark.read.parquet('/user/voltschok/data/analytics')
     message_zone=get_message_city(events, csv_path, spark)
     last_message_zone=last_message_city(events, csv_path, spark).select('user_id', F.col('act_city').alias('zone_id'))
-    #user_zones.show(30)
 
     #получаем датасет со всеми сообщениями и делаем join с информацией по zone_id   
     messages=events.where(F.col('event_type')=='message')\
@@ -208,9 +204,7 @@ def main():
     result_final.show(30)
     
     #записываем результат
-    result.write \
-        .mode("overwrite") \
-        .parquet(output_path)
+    result.write.mode("overwrite").parquet(output_path)
 
 if __name__ == "__main__":
         main()
