@@ -17,7 +17,8 @@ default_args = {
 dag_spark = DAG(
                         dag_id = "sprint-7-project_dag",
                         default_args=default_args,
-                        schedule_interval='@daily'
+                        schedule_interval='@daily',
+                        catchup=False
                         )
 
 update_data = SparkSubmitOperator(
