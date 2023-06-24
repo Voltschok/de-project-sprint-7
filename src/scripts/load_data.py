@@ -39,5 +39,4 @@ def main():
 
 if __name__ == "__main__":
         main()
-#!hdfs dfs -copyfromlocal /home/voltschok/Downloads/geo.csv /user/voltschok/data/geo/cities
-#!hdfs dfs -copyfromlocal /home/voltschok/Downloads/geo.csv /user/voltschok/data/geo/cities
+
