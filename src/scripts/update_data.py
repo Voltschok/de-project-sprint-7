@@ -15,7 +15,7 @@ def main():
         output_path=sys.argv[4]
 
         #base_input_path = '/user/master/data/geo/events'
-        #date = '2022-05-25'
+        #date = '2023-06-24'
         #depth=1
         #output_path = '/user/voltschok/data/geo/events/'
 
@@ -23,16 +23,17 @@ def main():
         sc = SparkContext(conf=conf)
         sql = SQLContext(sc)
 
-#чтение данных
-        events = sql.read.parquet(f"{base_input_path}/date={date}") #.sample(0.005)
-
-# запись данных
-        events\
-        .write\
-        .mode('overwrite')\
-        .partitionBy(['event_type'])\
-        .format('parquet')\
-        .save(f"{output_path}/date={date}")
+#чтение и запись данных данных
+        try:
+            events = sql.read.parquet(f"{base_input_path}/date={date}") #.sample(0.005)
+            events\
+            .write\
+            .mode('overwrite')\
+            .partitionBy(['event_type'])\
+            .format('parquet')\
+            .save(f"{output_path}/date={date}")
+        except:
+            print('Path does not exist')
 
 
 if __name__ == "__main__":
