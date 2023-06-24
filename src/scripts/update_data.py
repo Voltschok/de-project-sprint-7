@@ -24,7 +24,7 @@ def main():
         sql = SQLContext(sc)
 
 #чтение данных
-        events = sql.read.parquet(f"{base_input_path}") #.sample(0.005)
+        events = sql.read.parquet(f"{base_input_path}/date={date}") #.sample(0.005)
 
 # запись данных
         events\
