@@ -65,7 +65,7 @@ first_vitrin = SparkSubmitOperator(
                         executor_cores = 2,
                         executor_memory = '4g',
                         )
-empty_task = EmptyOperator(task_id='branch_false')
+
 
 branch = BranchDayOfWeekOperator(
         task_id="make_choice",
@@ -75,6 +75,7 @@ branch = BranchDayOfWeekOperator(
         dag=dag_spark
  
     )
+empty_task = EmptyOperator(task_id='branch_false', dag=dag_spark)
 
 second_vitrin = SparkSubmitOperator(
                         task_id='zone_month_week',
@@ -118,5 +119,6 @@ third_vitrin = SparkSubmitOperator(
                         executor_memory = '4g',
                         )
 
-update_data >> first_vitrin >> branch >> [second_vitrin] 
+update_data >> first_vitrin >> 
+branch >> [second_vitrin, empty_task ] 
 first_vitrin >> third_vitrin
