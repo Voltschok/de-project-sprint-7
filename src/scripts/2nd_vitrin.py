@@ -107,18 +107,17 @@ def last_message_city(events, csv_path, spark):
 
 def main():
     #получаем параметры из командной строки
-     base_input_path=sys.argv[1]
-     date=sys.argv[2]
-     depth=int(sys.argv[3])
-     csv_path=sys.argv[4]
-     output_path=sys.argv[5]
+    base_input_path=sys.argv[1]
+    date=sys.argv[2]
+    depth=int(sys.argv[3])
+    csv_path=sys.argv[4]
+    output_path=sys.argv[5]
     
     #base_input_path='/user/voltschok/data/geo/events'
     #date='2022-05-15'
     #depth=1
     #csv_path='/user/voltschok/data/geo/test.csv'
     #output_path='/user/voltschok/data/geo/analytics/'
-    
     spark = SparkSession.builder\
                         .master('local')\
                         .config('spark.executor.memory', '1G')\
@@ -131,93 +130,89 @@ def main():
     #получаем пути по заданному времени и глубине
     paths=input_paths(date, depth, base_input_path)
     paths2=[]
-    #проверка наличия путей
-    for path in paths:
-        try:
-            spark.read.parquet(path)
-        except:
-            paths2.append(path)
-    paths=(set(paths)).difference(set(paths2))   
+
     #считываем все события по заданным путям
-    events=spark.read.option("basePath", base_input_path).parquet(*paths)
-     
-    #получаем датасет с zone_id для каждого сообщения
-    #user_zones_t=spark.read.parquet('/user/voltschok/data/analytics')
-    message_zone=get_message_city(events, csv_path, spark)
-    last_message_zone=last_message_city(events, csv_path, spark).select('user_id', F.col('act_city').alias('zone_id'))
+    try:
+        events=spark.read.option("basePath", base_input_path).parquet(*paths)
 
-    #получаем датасет со всеми сообщениями и делаем join с информацией по zone_id   
-    messages=events.where(F.col('event_type')=='message')\
-    .select('event.message_id', F.col('event.message_from').alias('user_id'), 'event.datetime', 
-            F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
-    .withColumn('event_type', F.lit('message'))\
-    .join(message_zone, 'message_id', how='inner')\
-    .drop('message_id')\
-    .withColumn('month' , month(F.col('date')))\
-    .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
- 
-    #рассчитываем датасет с подписками пользователей и присваиваем им zone_id из последнего сообщения пользователя
-    subscriptions=events.where(F.col('event_type')=='subscription')\
-    .select(F.col('event.user').alias('user_id'), 'event.datetime',
-            F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
-    .withColumn('event_type', F.lit('subscription'))\
-    .join(last_message_zone, 'user_id', 'inner')\
-    .withColumn('month' , month(F.col('date')))\
-    .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('datetime')), 'yyyy-MM-dd')))
-    
-    #рассчитываем датасет с реакциями пользователей и присваиваем им zone_id из последнего сообщения пользователя
-    reactions=events.where(F.col('event_type')=='reaction')\
-    .select(F.col('event.reaction_from').alias('user_id'), 'event.datetime', 
-            F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
-    .withColumn('event_type', F.lit('reaction'))\
-    .join(last_message_zone, 'user_id', 'inner')\
-    .withColumn('month' , month(F.col('date')))\
-    .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
-   
-    #рассчитываем датасет с регистрациями пользователей и присваиваем им zone_id из последнего сообщения пользователя
-    registrations=messages\
-    .withColumn("reg_date_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("date"))))\
-    .where(F.col('reg_date_rank')==1).drop('reg_date_rank')\
-    .select('user_id','datetime', 'date')\
-    .withColumn('event_type', F.lit('registration'))\
-    .join(last_message_zone, 'user_id', 'inner')\
-    .withColumn('month' , month(F.col('date')))\
-    .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
-        
-    #объединяем все события
-    result=messages\
-    .union(subscriptions)\
-    .union(reactions)\
-    .union(registrations)
+        #получаем датасет с zone_id для каждого сообщения
+        #user_zones_t=spark.read.parquet('/user/voltschok/data/analytics')
+        message_zone=get_message_city(events, csv_path, spark)
+        last_message_zone=last_message_city(events, csv_path, spark).select('user_id', F.col('act_city').alias('zone_id'))
 
-    #рассчитываем статистику по zone_id по месяцам
-    result_month=result\
-    .groupBy('month', 'zone_id')\
-    .pivot('event_type').agg(F.count("*"))\
-    .withColumnRenamed('message','month_message')\
-    .withColumnRenamed('reaction','month_reaction')\
-    .withColumnRenamed('subscription','month_subscription')\
-    .withColumnRenamed('registration','month_user')
-             
-    #рассчитываем статистику по zone_id по неделям
-    result_week=result\
-    .groupBy('month', 'week', 'zone_id')\
-    .pivot('event_type').agg(F.count("*"))\
-    .withColumnRenamed('message','week_message')\
-    .withColumnRenamed('reaction','week_reaction')\
-    .withColumnRenamed('subscription','week_subscription')\
-    .withColumnRenamed('registration','week_user')
-       
-    #объединяем датасеты
-    result_final=result_week.join(result_month, ['month', 'zone_id'], 'left')
-    result_final.show()
-    
-    for col in cols:
-        if col not in result_final.columns:
-            result_final=result_final.withColumn(col,lit('null'))
- 
-    #записываем результат
-    result_final.select(cols).write.mode("overwrite").parquet(f'{output_path}/city_zone/city_zone-{date}-{depth}')
+        #получаем датасет со всеми сообщениями и делаем join с информацией по zone_id   
+        messages=events.where(F.col('event_type')=='message')\
+        .select('event.message_id', F.col('event.message_from').alias('user_id'), 'event.datetime', 
+                F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
+        .withColumn('event_type', F.lit('message'))\
+        .join(message_zone, 'message_id', how='inner')\
+        .drop('message_id')\
+        .withColumn('month' , month(F.col('date')))\
+        .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
 
+        #рассчитываем датасет с подписками пользователей и присваиваем им zone_id из последнего сообщения пользователя
+        subscriptions=events.where(F.col('event_type')=='subscription')\
+        .select(F.col('event.user').alias('user_id'), 'event.datetime',
+                F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
+        .withColumn('event_type', F.lit('subscription'))\
+        .join(last_message_zone, 'user_id', 'inner')\
+        .withColumn('month' , month(F.col('date')))\
+        .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('datetime')), 'yyyy-MM-dd')))
+
+        #рассчитываем датасет с реакциями пользователей и присваиваем им zone_id из последнего сообщения пользователя
+        reactions=events.where(F.col('event_type')=='reaction')\
+        .select(F.col('event.reaction_from').alias('user_id'), 'event.datetime', 
+                F.date_trunc("day", F.coalesce(F.col('event.datetime'), F.col('event.message_ts'))).alias('date'))\
+        .withColumn('event_type', F.lit('reaction'))\
+        .join(last_message_zone, 'user_id', 'inner')\
+        .withColumn('month' , month(F.col('date')))\
+        .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
+
+        #рассчитываем датасет с регистрациями пользователей и присваиваем им zone_id из последнего сообщения пользователя
+        registrations=messages\
+        .withColumn("reg_date_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("date"))))\
+        .where(F.col('reg_date_rank')==1).drop('reg_date_rank')\
+        .select('user_id','datetime', 'date')\
+        .withColumn('event_type', F.lit('registration'))\
+        .join(last_message_zone, 'user_id', 'inner')\
+        .withColumn('month' , month(F.col('date')))\
+        .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('date')), 'yyyy-MM-dd')))
+
+        #объединяем все события
+        result=messages\
+        .union(subscriptions)\
+        .union(reactions)\
+        .union(registrations)
+
+        #рассчитываем статистику по zone_id по месяцам
+        result_month=result\
+        .groupBy('month', 'zone_id')\
+        .pivot('event_type').agg(F.count("*"))\
+        .withColumnRenamed('message','month_message')\
+        .withColumnRenamed('reaction','month_reaction')\
+        .withColumnRenamed('subscription','month_subscription')\
+        .withColumnRenamed('registration','month_user')
+
+        #рассчитываем статистику по zone_id по неделям
+        result_week=result\
+        .groupBy('month', 'week', 'zone_id')\
+        .pivot('event_type').agg(F.count("*"))\
+        .withColumnRenamed('message','week_message')\
+        .withColumnRenamed('reaction','week_reaction')\
+        .withColumnRenamed('subscription','week_subscription')\
+        .withColumnRenamed('registration','week_user')
+
+        #объединяем датасеты
+        result_final=result_week.join(result_month, ['month', 'zone_id'], 'left')
+        result_final.show()
+
+        for col in cols:
+            if col not in result_final.columns:
+                result_final=result_final.withColumn(col,lit('null'))
+
+        #записываем результат
+        result_final.select(cols).write.mode("overwrite").parquet(f'{output_path}/city_zone/city_zone-{date}-{depth}')
+    except:
+        print('All paths were ignored')
 if __name__ == "__main__":
         main()
