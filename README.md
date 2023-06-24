@@ -43,11 +43,11 @@
 
 ### Пути к данным тестирования:
  - "/user/voltschok/data/tmp/user_address"
- - "/user/voltschok/data/tmp/friend_offers"
- - "/user/voltschok/data/tmp/city_stats"
+ - "/user/voltschok/data/tmp/friend_recommendation"
+ - "/user/voltschok/data/tmp/city_zone"
 
 ### Пути к данным для аналитиков:
  - "/user/voltschok/data/analytics/user_address"
- - "/user/voltschok/data/analytics/friend_offers"
- - "/user/voltschok/data/analytics/city_stats"
+ - "/user/voltschok/data/analytics/friend_recommendation"
+ - "/user/voltschok/data/analytics/city_zone"
  
