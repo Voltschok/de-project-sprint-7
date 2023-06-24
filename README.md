@@ -19,8 +19,16 @@
 Вложенные файлы в репозиторий будут использоваться для проверки и предоставления обратной связи по проекту. Поэтому постарайтесь публиковать ваше решение согласно установленной структуре — так будет проще соотнести задания с решениями.
 
 Внутри `src` расположены две папки:
-- `/src/dags`;
-- `/src/scripts`.
+- `/src/dags`
+	de-sprint-7-project-dag-initial-load.py — Инициальная загрузка данных выполняется в ручную (однократно)
+	de-sprint-7-project-dag-initial-load.py — DAG обновляет слой STG из источника и произвоодит расчет метрик ветрины (на заданную глубину).
+- `/src/scripts`
+
+    load_data.py — Job инициальной загрузки;
+    update_data.py — Job обновления STG;
+    1st_vitrin.py — Job расчета метрик пользователя;
+    2nd_vitrin.py — Job расчета метрик по зонам (городам);
+    3d_vitrin.py — Job расчета метрик для витрины с рекомендациями друзей.
 
 ## Структура хранилища
 
@@ -39,12 +47,6 @@
  - user_address: ежедневно
  - city_zone: еженедельно
  - friend_recommendation: ежедневно
- 
-
-### Пути к данным тестирования:
- - "/user/voltschok/data/tmp/user_address"
- - "/user/voltschok/data/tmp/city_zone"
- - "/user/voltschok/data/tmp/friend_recommendation"
 
 ### Пути к данным для аналитиков:
  - "/user/voltschok/data/analytics/user_address"
