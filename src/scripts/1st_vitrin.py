@@ -97,11 +97,6 @@ def main():
     depth=int(sys.argv[3])
     csv_path=sys.argv[4]
     output_path=sys.argv[5]
-    print('base_input_path: ', base_input_path)
-    print('date: ', date)
-    print('depth: ', depth)
-    print('csv_path: ', csv_path)
-    print('output_path: ', output_path)
     
 #     base_input_path='/user/voltschok/data/geo/events'
 #     date='2022-05-01'
@@ -116,7 +111,14 @@ def main():
 
     #рассчитываем пути по заданным параметрам - дате, глубине расчета и источнику
     paths=input_paths(date, depth, base_input_path)
-      
+    paths2=[]
+    #проверка наличия путей
+    for path in paths:
+        try:
+            spark.read.parquet(path)
+        except:
+            paths2.append(path)
+    paths=(set(paths)).difference(set(paths2))  
     #вычисляем датасет со всеми событиями
     events=spark.read.option("basePath", base_input_path).parquet(*paths)
 
