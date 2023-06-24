@@ -11,7 +11,7 @@ os.environ['PYTHONPATH'] ='/usr/local/lib/python3.8'
 
 default_args = {
                                 'owner': 'airflow',
-                                'start_date':datetime(2020, 1, 1),
+                                'start_date':datetime(2022, 1, 1),
                                 }
 
 dag_spark = DAG(
