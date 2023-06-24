@@ -23,6 +23,9 @@ from pyspark.sql.functions import *
 from pyspark.sql.functions import udf
 from pyspark.sql.window import Window
 
+cols=['month', 'week','zone_id', 'week_message', 'week_reaction', 'week_subscription', 'week_user',
+    'month_message',  'month_reaction', 'month_subscription', 'month_user']
+
 def get_distance(lat_1, lat_2, long_1, long_2):
     """ Функция для расчета расстояния по заданным координатам  """
     lat_1=(math.pi/180)*lat_1
@@ -104,17 +107,17 @@ def last_message_city(events, csv_path, spark):
 
 def main():
     #получаем параметры из командной строки
-    base_input_path=sys.argv[1]
-    date=sys.argv[2]
-    depth=int(sys.argv[3])
-    csv_path=sys.argv[4]
-    output_path=sys.argv[5]
+#     base_input_path=sys.argv[1]
+#     date=sys.argv[2]
+#     depth=int(sys.argv[3])
+#     csv_path=sys.argv[4]
+#     output_path=sys.argv[5]
     
-#     base_input_path='/user/voltschok/data/geo/events'
-#     date='2022-05-15'
-#     depth=3
-#     csv_path='/user/voltschok/data/geo/test.csv'
-#     output_path='/user/voltschok/data/geo/analytics/'
+    base_input_path='/user/voltschok/data/geo/events'
+    date='2022-05-15'
+    depth=1
+    csv_path='/user/voltschok/data/geo/test.csv'
+    output_path='/user/voltschok/data/geo/analytics/'
     
     spark = SparkSession.builder\
                         .master('local')\
@@ -199,12 +202,15 @@ def main():
     .withColumnRenamed('registration','week_user')
        
     #объединяем датасеты
-    result_final=result_week.join(result_month, ['month', 'zone_id'], 'left')\
-    .select ('month', 'week','zone_id', 'week_message', 'week_reaction', 'week_subscription', 'week_user',
-    'month_message',  'month_reaction', 'month_subscription', 'month_user')
+    result_final=result_week.join(result_month, ['month', 'zone_id'], 'left')
+    result_final.show()
     
+    for col in cols:
+        if col not in result_final.columns:
+            result_final=result_final.withColumn(col,lit('null'))
+ 
     #записываем результат
-    result_final.write.mode("overwrite").parquet(f'{output_path}/zone_month_week-{date}-{depth}')
+    result_final.select(cols).write.mode("overwrite").parquet(f'{output_path}/zone_month_week-{date}-{depth}')
 
 if __name__ == "__main__":
         main()
