@@ -119,6 +119,5 @@ third_vitrin = SparkSubmitOperator(
                         executor_memory = '4g',
                         )
 
-update_data >> first_vitrin >> 
-branch >> [second_vitrin, empty_task ] 
+update_data >> first_vitrin >> branch >> [second_vitrin, empty_task ] 
 first_vitrin >> third_vitrin
