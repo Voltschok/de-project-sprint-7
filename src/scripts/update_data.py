@@ -10,7 +10,7 @@ import pyspark.sql.functions as F
 
 def main():
         base_input_path=sys.argv[1]
-        date='{{ ds }}'
+        date=sys.argv[2]
         depth=1
         output_path=sys.argv[5]
 
@@ -19,7 +19,7 @@ def main():
         #depth=1
         #output_path = '/user/voltschok/data/geo/events/'
 
-        conf = SparkConf().setAppName(f"EventsPartitioningJob-test")
+        conf = SparkConf().setAppName(f"Update_data")
         sc = SparkContext(conf=conf)
         sql = SQLContext(sc)
 
