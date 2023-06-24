@@ -130,7 +130,14 @@ def main():
     
     #получаем пути по заданному времени и глубине
     paths=input_paths(date, depth, base_input_path)
-       
+    paths2=[]
+    #проверка наличия путей
+    for path in paths:
+        try:
+            spark.read.parquet(path)
+        except:
+            paths2.append(path)
+    paths=(set(paths)).difference(set(paths2))   
     #считываем все события по заданным путям
     events=spark.read.option("basePath", base_input_path).parquet(*paths)
      
