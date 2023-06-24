@@ -63,6 +63,12 @@ first_vitrin = SparkSubmitOperator(
                         executor_memory = '4g',
                         )
 
+branch = BranchDayOfWeekOperator(
+        task_id="make_choice",
+        follow_task_ids_if_true="logic_a",
+        follow_task_ids_if_false="logic_b",
+        week_day="Monday",
+    )
 
 second_vitrin = SparkSubmitOperator(
                         task_id='zone_month_week',
@@ -106,4 +112,7 @@ third_vitrin = SparkSubmitOperator(
                         executor_memory = '4g',
                         )
 
-update_data >> first_vitrin >> second_vitrin >> third_vitrin
+(update_data
+ >> first_vitrin  
+ >> branch >> second_vitrin 
+ >> third_vitrin)
