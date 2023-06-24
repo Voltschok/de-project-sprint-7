@@ -154,7 +154,6 @@ def main():
     .join(last_message_zone, 'user_id', 'inner')\
     .withColumn('month' , month(F.col('date')))\
     .withColumn("week", F.weekofyear(F.to_date(F.to_timestamp(F.col('datetime')), 'yyyy-MM-dd')))
-    subscriptions.where('zone_id is not null').show(10)
     
     #рассчитываем датасет с реакциями пользователей и присваиваем им zone_id из последнего сообщения пользователя
     reactions=events.where(F.col('event_type')=='reaction')\
