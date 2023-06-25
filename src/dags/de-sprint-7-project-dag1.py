@@ -98,26 +98,36 @@ second_vitrin = SparkSubmitOperator(
                         executor_memory = '4g',
                         )
 
-third_vitrin = SparkSubmitOperator(
-                        task_id='friend_recommendation',
-                        dag=dag_spark,
-                        application ='/lessons/dags/3d_vitrin.py' ,
-                        conn_id= 'yarn_spark',
-                        application_args = [  
+# third_vitrin = SparkSubmitOperator(
+#                         task_id='friend_recommendation',
+#                         dag=dag_spark,
+#                         application ='/lessons/dags/3d_vitrin.py' ,
+#                         conn_id= 'yarn_spark',
+#                         application_args = [  
                           
-                            '/user/voltschok/data/geo/events',
-                            '{{ ds }}',
-                            '1',
-                            '/user/voltschok/data/geo/cities/geo.csv',
-                            '/user/voltschok/data/analytics/'                            
-                        ],
-                        conf={
-            "spark.driver.maxResultSize": "20g",
-            "spark.sql.broadcastTimeout": 1200,
-        },
-                        executor_cores = 2,
-                        executor_memory = '4g',
-                        )
+#                             '/user/voltschok/data/geo/events',
+#                             '2022-05-25',
+#                             '1',
+#                             '/user/voltschok/data/geo/cities/geo.csv',
+#                             '/user/voltschok/data/analytics/'                            
+#                         ],
+#                         conf={
+#             "spark.driver.maxResultSize": "20g",
+#             "spark.sql.broadcastTimeout": 1200,
+#         },
+#                         executor_cores = 2,
+#                         executor_memory = '1g' 
+#                         )
 
-update_data >> first_vitrin >> branch >> [second_vitrin, empty_task ] 
-first_vitrin >> third_vitrin
+third_vitrin = BashOperator(
+    task_id='friend_recommendation',
+    bash_command='spark-submit --master local  --deploy-mode client /lessons/dags/3d_vitrin.py  {{ params.source }} {{ params.date }} {{ params.depth }} {{ params.geo_data }} {{ params.dest }}',
+         
+    params={'source': '/user/voltschok/data/geo/events', 'date': '2022-05-31', 'depth': '1', 'geo_data':'/user/voltschok/data/geo/cities/geo.csv' , 'dest':'/user/voltschok/data/analytics/' },
+        dag=dag_spark
+)
+
+
+
+update_data >> first_vitrin   
+update_data >> third_vitrin
