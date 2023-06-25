@@ -83,7 +83,7 @@ def main():
     #base_input_path='/user/voltschok/data/geo/events'
     #date='2022-05-25'
     #depth=30
-    #csv_path='/user/voltschok/data/geo/test.csv'
+    #csv_path='/user/voltschok/data/geo/cities/geo.csv'
     #output_path='/user/voltschok/data/geo/analytics/'
     spark = SparkSession.builder \
                     .master("local") \
