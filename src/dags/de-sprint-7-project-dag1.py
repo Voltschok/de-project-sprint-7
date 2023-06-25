@@ -18,7 +18,7 @@ default_args = {
                                 }
 
 dag_spark = DAG(
-                        dag_id = "sprint-7-project_dag",
+                        dag_id = "sprint-7-project_dag_user_address_friend_recommendation",
                         default_args=default_args,
                         schedule_interval='@daily',
                         catchup=False
