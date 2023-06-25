@@ -50,6 +50,7 @@ second_vitrin = SparkSubmitOperator(
 sensor=ExternalTaskSensor(task_id='dag_sensor_2nd_vitrin_update',
                         external_dag_id = 'project_dag_user_address_friend_recommendation',
                         mode = 'reschedule',
+                        external_task_id='update_data',
                         dag=dag_spark)  
 
 sensor >>  second_vitrin 
