@@ -59,7 +59,7 @@ def get_subs_city(common_subs_distance, csv_path, spark):
 
     #рассчитываем датасет с информацией по городам, из которых направлены все сообщения 
     #(используем udf функцию для расчета расстояния)
-    common_subs_distance.printSchema()
+    
     messages_cities=common_subs_distance\
     .crossJoin(cities)\
     .withColumn('distance',udf_func( F.col('lat_1'), F.col('lat_c'), F.col('lon_1'), F.col('lon_c')).cast(DoubleType()))\
