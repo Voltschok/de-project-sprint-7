@@ -2,9 +2,12 @@ import sys
 import math
 import datetime
 import os
+
 os.environ['HADOOP_CONF_DIR'] = '/etc/hadoop/conf'
 os.environ['YARN_CONF_DIR'] = '/etc/hadoop/conf'
-os.environ['PYSPARK_PYTHON'] = '/usr/bin/python3'
+os.environ['JAVA_HOME']='/usr'
+os.environ['SPARK_HOME'] ='/usr/lib/spark'
+os.environ['PYTHONPATH'] ='/usr/local/lib/python3.8'
 
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SQLContext
