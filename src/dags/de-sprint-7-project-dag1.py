@@ -75,28 +75,6 @@ branch = BranchDayOfWeekOperator(
         dag=dag_spark
  
     )
-empty_task = EmptyOperator(task_id='branch_false', dag=dag_spark)
-
-second_vitrin = SparkSubmitOperator(
-                        task_id='zone_month_week',
-                        dag=dag_spark,
-                        application ='/lessons/dags/2nd_vitrin.py',
-                        conn_id= 'yarn_spark',
-                        application_args = [  
-                            
-                            '/user/voltschok/data/geo/events',
-                            '{{ ds }}',
-                            '1',
-                            '/user/voltschok/data/geo/cities/geo.csv',
-                            '/user/voltschok/data/analytics/'                            
-                        ],
-                        conf={
-            "spark.driver.maxResultSize": "20g",
-            "spark.sql.broadcastTimeout": 1200,
-        },
-                        executor_cores = 2,
-                        executor_memory = '4g',
-                        )
 
 # third_vitrin = SparkSubmitOperator(
 #                         task_id='friend_recommendation',
