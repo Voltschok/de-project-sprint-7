@@ -1,7 +1,7 @@
 from datetime import datetime 
 from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-from airflow.operators.weekday import BranchDayOfWeekOperator
+from airflow.operators.bash import BashOperator
 from airflow.decorators import dag, task
 from airflow.sensors.external_task  import ExternalTaskSensor
 import os
