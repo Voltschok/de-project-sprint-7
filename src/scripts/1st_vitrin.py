@@ -40,7 +40,7 @@ def input_paths(date, depth,base_input_path ):
     return [f"{base_input_path}/date={(dt-datetime.timedelta(days=x)).strftime('%Y-%m-%d')}" for x in range(int(depth))]
 
 def get_geo_cities(csv_path, spark):
-    #получаем датасет с геоданными городов из csv-файла
+    #получаем датасет с геоданными городов из csv-файла (в который уже добавлена колонка 'timezone' - вручную добавлены значения)
     geo_data_csv=spark.read.option("header", True)\
     .option("delimiter", ",").csv(csv_path)
  
@@ -166,7 +166,7 @@ def main():
         .join(travel_list, 'user_id', 'left')\
         .join(time_local, 'user_id', 'left')\
         .select('user_id', 'act_city', 'home_city', 'travel_count',  'travel_array', 'localtime')
-        final.orderBy('user_id').where('home_city is not null').show(30)
+        
 
         #записываем результат по заданному пути
         final.write \
