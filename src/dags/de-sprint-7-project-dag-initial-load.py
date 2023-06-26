@@ -18,7 +18,7 @@ default_args = {
                                 }
 
 dag_spark = DAG(
-                        dag_id = "sprint-7-project_dag_initial_load",
+                        dag_id = "0-project_dag_initial_load",
                         default_args=default_args,
                         schedule_interval=None,
                         catchup=False
