@@ -209,7 +209,6 @@ def main():
 
         #объединяем датасеты
         result_final=result_week.join(result_month, ['month', 'zone_id'], 'left')
-        result_final.show()
 
         for col in cols:
             if col not in result_final.columns:
