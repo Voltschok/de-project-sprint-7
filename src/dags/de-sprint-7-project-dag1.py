@@ -66,16 +66,6 @@ first_vitrin = SparkSubmitOperator(
                         executor_memory = '4g',
                         )
 
-
-branch = BranchDayOfWeekOperator(
-        task_id="make_choice",
-        follow_task_ids_if_true="zone_month_week",
-        follow_task_ids_if_false="branch_false",
-        week_day="Monday",
-        dag=dag_spark
- 
-    )
-
 # third_vitrin = SparkSubmitOperator(
 #                         task_id='friend_recommendation',
 #                         dag=dag_spark,
