@@ -1,4 +1,5 @@
 from datetime import datetime 
+from datetime import datetime, timedelta, date
 from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from airflow.decorators import dag, task
@@ -51,7 +52,7 @@ sensor=ExternalTaskSensor(task_id='dag_sensor_2nd_vitrin_update',
                         external_dag_id = 'project_dag_user_address_friend_recommendation',
                         mode = 'poke',
                         external_task_id='update_data',
-                        execution_delta=datetime.timedelta(day=7),
+                        execution_delta=date.today()-timedelta(day=7),
                         dag=dag_spark)  
 
 sensor >>  second_vitrin 
