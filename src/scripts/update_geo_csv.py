@@ -25,7 +25,7 @@ spark = SparkSession.builder \
 
 geo_data_csv=spark.read.option("header", True)\
     .option("delimiter", ";").csv('/user/voltschok/data/geo/cities/geo.csv')
-geo_data_csv.show()    
+   
     #добавляем недостающие города 
 missing_tz_data= [
             ('Sydney', 'Australia/Sydney'),
