@@ -44,7 +44,7 @@ def input_paths(date, depth,base_input_path ):
 def get_geo_cities(csv_path, spark):
     """Функция рассчитывает датасет с геоданными городов из csv-файла""" 
     geo_data_csv=spark.read.option("header", True)\
-    .option("delimiter", ";").csv(csv_path)
+    .option("delimiter", ",").csv(csv_path)
  
     geo_data= geo_data_csv.withColumn('lat', regexp_replace('lat', ',', '.').cast(DoubleType()))\
     .withColumn('lon', regexp_replace('lng', ',', '.').cast(DoubleType()))\
@@ -112,7 +112,6 @@ def main():
             .withColumn('local_time', date_format(col('local_datetime'), 'HH:mm:ss'))\
             .select('user_left', 'user_right', 'processed_dttm',  'zone_id', 'local_time')
 
-        recommendation.orderBy('user_left').show(30)
 
         #записываем результат по заданному пути
         recommendation.write \
