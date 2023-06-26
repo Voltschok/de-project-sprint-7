@@ -102,7 +102,7 @@ def main():
     
         #рассчитываем необходимые датасеты с помощью функций 
         common_subs_distance_zone1=get_common_subs_distance_zone(events, csv_path, spark)
-        no_contacts_users1=get_no_contacts(events)
+        no_contacts_users1=get_no_contacts(events, common_subs_distance_zone1)
 
         #рассчитываем финальный датасет
         recommendation=common_subs_distance_zone1.join(no_contacts_users1, ['user_left', 'user_right'], 'inner')\
@@ -148,7 +148,7 @@ def get_common_subs_distance_zone(events, csv_path, spark):
            
     return common_subs_distance_zone
 
-def get_no_contacts(events):
+def get_no_contacts(events, common_subs_distance_zone1):
            
     #рассчитываем все пары пользователей, которые переписывались 
     user_left_contacts = events.where(F.col('event_type')=='message') \
@@ -158,24 +158,8 @@ def get_no_contacts(events):
         .select(col('event.message_to').alias('user_left'), col('event.message_from').alias('user_right'))
     
     real_contacts=user_left_contacts.union(user_right_contacts).distinct()
-         
-    #рассчитываем все возможные пары пользователей                    
-    all_users=events.where(F.col('event_type')=='message')\
-    .selectExpr('event.message_from as user_left')\
-    .union(events.where(F.col('event_type')=='message').selectExpr('event.message_to as user_right')).distinct()
-    
-    all_possible_contacts=all_users.crossJoin(all_users.withColumnRenamed('user_left', 'user_right'))
-    
- 
-    #рассчитываем все пары пользователей, которые не переписывались друг с другом, и удаляем дубликаты                      
-    no_contacts_users_with_dupl=all_possible_contacts.subtract(real_contacts) 
-    
-    no_contacts_users=no_contacts_users_with_dupl\
-                      .union(no_contacts_users_with_dupl)\
-                      .select(F.col('user_right').alias('user_left'),F.col('user_left').alias('user_right'))\
-                      .distinct()
-           
-    return no_contacts_users  
+    return common_subs_distance_zone1.join( real_contacts, ['user_left', 'user_right'], 'left_anti')    
+   
            
 if __name__ == "__main__":
     main()
