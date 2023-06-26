@@ -5,5 +5,5 @@
 5. Добавил файл update_geo_csv.py, с помощью которого добавил колонку и записал данные по timezone (посмотрел на сайте http://time-zone.net/australia),которые отсутствуют в библиотеке\
 6. В 1st_vitrin.py и В 3d_vitrin.py при расчете localtime теперь использую указанную выше колонку с данными по временным зонам для всех городов из справочника
 7. В 1st_vitrin.py, 2nd_vitrin.py и в 3d_vitrin.py убрал отладочные команды (show).
-8. В 2nd_vitrin.pyresult_final=result_final.withColumn(col,lit('null')) заменил на result_final=result_final.withColumn(col,F.lit(0)) 
+8. В 2nd_vitrin.py "result_final=result_final.withColumn(col,lit('null'))" заменил на "result_final=result_final.withColumn(col,F.lit(0))" 
 9. В 3d_vitrin.py выборку с пользователями, которые подписаны на одни каналы и находятся на расстоянии менее километра, поджойнить с выборкой тех, кто переписывался, методом left_anti. 
