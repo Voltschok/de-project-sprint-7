@@ -48,7 +48,7 @@ def get_geo_cities(csv_path, spark):
     .withColumn('lon', regexp_replace('lng', ',', '.').cast(DoubleType()))\
     .withColumnRenamed("lat", "lat_c") \
     .withColumnRenamed("lon", "lon_c")\
-    .select('id', 'city', 'lat_c',  'lon_c')
+    .select('id', 'city', 'lat_c',  'lon_c', 'timezone')
         
     return geo_data
 
@@ -85,7 +85,7 @@ def get_act_city(events_messages, csv_path, spark):
     .withColumn('distance',udf_func( F.col('lat'), F.col('lat_c'), F.col('lon'), F.col('lon_c')).cast('float'))\
     .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id']).orderBy(F.asc("distance")))) \
     .where("distance_rank == 1")\
-    .select('user_id', F.col('city').alias('act_city'), 'date' )
+    .select('user_id', F.col('city').alias('act_city'), 'date', 'timezone'  )
 
     return messages_cities
 
@@ -97,6 +97,12 @@ def main():
     depth=int(sys.argv[3])
     csv_path=sys.argv[4]
     output_path=sys.argv[5]
+
+    #base_input_path='/user/voltschok/data/geo/events'
+    #date='2022-05-25'
+    #depth=1
+    #csv_path='/user/voltschok/data/geo/cities/geo.csv'
+    #output_path='/user/voltschok/data/geo/analytics/'
     
     spark = SparkSession.builder \
                     .master("local") \
@@ -149,7 +155,7 @@ def main():
         travel_list=temp_df.groupBy('user_id').agg(F.collect_list('city').alias('travel_array'))
 
         #рассчитываем локальное время
-        time_local=act_cities_df.withColumn('timezone',  F.lit('Australia/Sydney'))\
+        time_local=act_cities_df\
         .withColumn('localtime',  F.from_utc_timestamp(F.col("date"),F.col('timezone')))\
         .drop('timezone', 'city', 'date', 'datetime' , 'act_city')
 
