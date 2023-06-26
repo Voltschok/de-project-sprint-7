@@ -212,7 +212,7 @@ def main():
 
         for col in cols:
             if col not in result_final.columns:
-                result_final=result_final.withColumn(col,lit('null'))
+                result_final=result_final.withColumn(col, 0)
 
         #записываем результат
         result_final.select(cols).write.mode("overwrite").parquet(f'{output_path}/city_zone/city_zone-{date}-{depth}')
