@@ -19,7 +19,7 @@ default_args = {
                                 }
 
 dag_spark = DAG(
-                        dag_id = "sprint-7-project_dag_zone_week_month",
+                        dag_id = "2-project_dag_zone_week_month",
                         default_args=default_args,
                         schedule_interval='@weekly',
                         catchup=False
