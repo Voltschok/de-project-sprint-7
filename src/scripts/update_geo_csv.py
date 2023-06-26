@@ -3,9 +3,9 @@ import os
 
 os.environ['HADOOP_CONF_DIR'] = '/etc/hadoop/conf'
 os.environ['YARN_CONF_DIR'] = '/etc/hadoop/conf'
-os.environ['JAVA_HOME']='/usr'
-os.environ['SPARK_HOME'] ='/usr/lib/spark'
-os.environ['PYTHONPATH'] ='/usr/local/lib/python3.8'
+# os.environ['JAVA_HOME']='/usr'
+# os.environ['SPARK_HOME'] ='/usr/lib/spark'
+# os.environ['PYTHONPATH'] ='/usr/local/lib/python3.8'
 
 import pyspark.sql.functions as F
 import findspark
@@ -25,7 +25,7 @@ spark = SparkSession.builder \
 
 geo_data_csv=spark.read.option("header", True)\
     .option("delimiter", ";").csv('/user/voltschok/data/geo/cities/geo.csv')
-    
+geo_data_csv.show()    
     #добавляем недостающие города 
 missing_tz_data= [
             ('Sydney', 'Australia/Sydney'),
