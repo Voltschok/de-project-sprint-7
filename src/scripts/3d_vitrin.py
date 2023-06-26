@@ -52,7 +52,7 @@ def get_geo_cities(csv_path, spark):
     .withColumn('lon', regexp_replace('lng', ',', '.').cast(DoubleType()))\
     .withColumnRenamed("lat", "lat_c") \
     .withColumnRenamed("lon", "lon_c")\
-    .select('id', 'city', 'lat_c',  'lon_c')
+    .select('id', 'city', 'lat_c',  'lon_c', 'timezone')
   
     return geo_data
 
@@ -108,7 +108,6 @@ def main():
 
         #рассчитываем финальный датасет
         recommendation=common_subs_distance_zone1.join(no_contacts_users1, ['user_left', 'user_right'], 'inner')\
-            .withColumn('timezone',  F.lit('Australia/Sydney'))\
             .withColumn("processed_dttm", current_date())\
             .withColumn('local_datetime',  F.from_utc_timestamp(F.col("processed_dttm"),F.col('timezone')))\
             .withColumn('local_time', date_format(col('local_datetime'), 'HH:mm:ss'))\
