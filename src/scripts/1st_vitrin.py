@@ -63,7 +63,7 @@ def get_general_tab(events_messages, csv_path, spark):
     messages_cities=events_messages\
     .crossJoin(cities)\
     .withColumn('distance',udf_func( F.col('lat'), F.col('lat_c'), F.col('lon'), F.col('lon_c')).cast('float'))\
-    .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id'])\
+    .withColumn("distance_rank", F.row_number().over(Window().partitionBy(['user_id', 'message_id'])\
                                                             .orderBy(F.asc("distance")))) \
     .where("distance_rank == 1")\
     .drop('distance_rank' , 'distance' , 'lat', 'lon', 'id', 'lat_c', 'lon_c')
@@ -78,7 +78,7 @@ def get_act_city(events_messages, csv_path, spark):
     #рассчитываем датасет с информацией по городам, из которых направлены последние отправленные сообщения 
     #(используем udf функцию для расчета расстояния) 
     messages_cities=events_messages\
-    .withColumn("datetime_rank", F.row_number().over(Window().partitionBy(['user_id', 'message_id'])\
+    .withColumn("datetime_rank", F.row_number().over(Window().partitionBy(['user_id'])\
                                                      .orderBy(F.desc("datetime"))))\
     .where("datetime_rank == 1").orderBy('user_id')\
     .crossJoin(cities)\
