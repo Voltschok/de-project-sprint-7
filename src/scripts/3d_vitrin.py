@@ -107,7 +107,7 @@ def main():
         no_contacts_users1=get_no_contacts(events, common_subs_distance_zone1)
 
         #рассчитываем финальный датасет
-        recommendation=common_subs_distance_zone1.join(no_contacts_users1, ['user_left', 'user_right'], 'inner')\
+        recommendation=no_contacts_users1\ #common_subs_distance_zone1.join(no_contacts_users1, ['user_left', 'user_right'], 'inner')\
             .withColumn("processed_dttm", current_date())\
             .withColumn('local_datetime',  F.from_utc_timestamp(F.col("processed_dttm"),F.col('timezone')))\
             .withColumn('local_time', date_format(col('local_datetime'), 'HH:mm:ss'))\
